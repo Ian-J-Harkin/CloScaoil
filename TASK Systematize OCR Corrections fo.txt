@@ -1,0 +1,24 @@
+TASK: Systematize OCR Corrections for Chapter 04
+
+1. Knowledge Extraction
+
+Scan caibidlí/old-orthography/manannan00.md through 03.md.
+
+Compare them against their original OCR state (if available via Git history) to extract a list of "Verified" word mappings for config/corrections_dict.json.
+
+2. Script Execution
+
+Run ocr_fixer.py on manannan04.md.
+
+Heuristic Check: Ensure the "Go" preposition rule is active for the "Mala" correction on Line 1 of Chapter 04.
+
+Layout Check: Verify that original line breaks are preserved and headers are successfully converted to [l.XX]: # markers with a leading blank line.
+
+3. Feedback Loop
+
+Present a Walkthrough Artifact of all changes.
+
+Specifically highlight any words the script identified as potential_new (mixed-case or OCR artifacts) for me to categorize into the verified or ambiguous dictionary sections.
+
+Final Architectural Tip:
+In your ocr_fixer.py, the is_page_header list is quite long. Consider moving those regex patterns into a separate section of your corrections_dict.json. This allows you to add new OCR header "junk" patterns (which change as the book's print quality varies) without editing the Python code every time.
