@@ -1,7 +1,12 @@
 # Session Waypoint: OCR Fixing Pipeline Improvements
 
 ## Accomplishments This Session
-1. **Dictionary Purge & Audit:** Successfully audited `config/corrections_dict.json` using robust Levenshtein distance checks to purge 20+ hallucinated mappings caused by previous misaligned history extraction (e.g., `atá` incorrectly mapping to `daoine`). 
+1. **Streamlit Digitization Lab:** 
+   - **Wizard UI:** Implemented a multi-stage "Wizard" interface with visual indicators and automatic progression.
+   - **Native Windows Explorer Integration:** Bridged Streamlit with `tkinter` to allow native file selection from local directories.
+   - **Dynamic Configuration:** Added workspace settings sidebar for configuring project and toolkit root paths.
+   - **Integrated Reports:** Real-time visualization of the `ambiguous_matches` report.
+2. **Dictionary Purge & Audit:** Successfully audited `config/corrections_dict.json` using robust Levenshtein distance checks to purge 20+ hallucinated mappings caused by previous misaligned history extraction (e.g., `atá` incorrectly mapping to `daoine`). 
 2. **Grammar & Contextual Rules:** 
    - Implemented the 'Go' preposition constraint (no lenition before consonants).
    - Added generalized rules for systemic OCR errors specific to Irish orthography (e.g., preventing `ii` which never occurs natively, converting `inei` to `méi`).
@@ -16,4 +21,9 @@
 ## Next Session Priorities
 1. **Continue Chapter 4 Output Review:** Continue the granular proofreading of `manannan04.md`. Address the specific remaining typos by adding them to the `verified` dictionary or establishing new heuristic patterns where appropriate.
 2. **Ambiguous Words Resolution:** Address the `ar` vs. `ár` ambiguous flags logged in the generated `chapter_04_walkthrough.md` report.
-3. **Progress to Next Chapters:** Once Chapter 4 is fully signed off, apply the refined, hallucination-free `ocr_fixer.py` engine to subsequent chapters (Chapter 5 onwards).
+3. **Progress to Next Chapters:** Once Chapter 4 is fully signed off, apply the refined engine to subsequent chapters.
+4. **Platform Independence (macOS / Linux):**
+    - [ ] **Dynamic Root Discovery:** Eliminate hardcoded `C:\github` paths in `streamlit_app.py`. Use `os.getcwd()` or relative discovery.
+    - [ ] **Tkinter Fallback:** Implement a `try-except` block for the `tkinter` import to provide a manual path input fallback if a GUI display is missing (common on headless Linux).
+    - [ ] **Mac Dependency Docs:** Update instructions for macOS users (e.g., `brew install python-tk`).
+    - [ ] **Cross-OS Command Testing:** Verify that `sys.executable` subprocess calls correctly resolve when running in non-Windows virtual environments.
