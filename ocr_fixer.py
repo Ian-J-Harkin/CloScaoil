@@ -26,7 +26,7 @@ class OCRFixer:
             # Remove loose spacing before punctuation: " word . " -> " word."
             text = re.sub(r'[^\S\r\n]+([?!.,:;])', r'\1', text)
             # Ensure single space after punctuation: "word.next" -> "word. next"
-            text = re.sub(r'([?!.,:;])([^\S\r\n]+)', r'\1 ', text)
+            text = re.sub(r'([?!.,:;])(?=\w)', r'\1 ', text)
             
             # Remove space after opening quotes: “ Níl -> “Níl
             text = re.sub(r'([“"‘])[^\S\r\n]+', r'\1', text)
