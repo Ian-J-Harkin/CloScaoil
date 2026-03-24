@@ -3,3 +3,6 @@ google-generativeai
 argparse
 Pillow
 pytest
+EbookLib
+html5lib
+markdown

@@ -443,6 +443,66 @@ class BatchProcessor:
                 return full_path
         return None
 
+class EpubBuilder:
+    def __init__(self, metadata=None):
+        self.metadata = metadata or {"title": "Manannán", "author": "Manannán", "language": "ga"}
+
+    def generate_epub(self, input_dir, output_file):
+        try:
+            from ebooklib import epub
+            import markdown
+            import unicodedata
+        except ImportError:
+            import sys
+            print("WARN: EbookLib or markdown not installed. EPUB generation disabled.", file=sys.stderr)
+            return None
+
+        book = epub.EpubBook()
+        book.set_identifier('manannan-1943')
+        book.set_title(self.metadata.get("title", "Manannán"))
+        book.set_language(self.metadata.get("language", "ga"))
+        book.add_author(self.metadata.get("author", "Manannán"))
+
+        # Add CSS
+        style = '''
+@namespace epub "http://www.idpf.org/2007/ops";
+body { font-family: "Gadelica", serif; }
+h1, h2, h3 { text-align: center; }
+'''
+        nav_css = epub.EpubItem(uid="style_nav", file_name="style/nav.css", media_type="text/css", content=style)
+        book.add_item(nav_css)
+
+        chapters = []
+        files = sorted([f for f in os.listdir(input_dir) if f.endswith('.md')])
+        
+        for idx, filename in enumerate(files):
+            path = os.path.join(input_dir, filename)
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Clean and normalize (call generate_golden_copy logic implicitly)
+            content = re.sub(r'\[l\.\d+\]: #\s*', '', content)
+            content = unicodedata.normalize('NFC', content)
+            
+            # Convert to HTML
+            html_content = markdown.markdown(content)
+            
+            # Create chapter
+            c = epub.EpubHtml(title=f"Caibidil {idx+1}", file_name=f"chap_{idx+1}.xhtml", lang="ga")
+            c.content = f"<h1>Caibidil {idx+1}</h1>\n{html_content}"
+            c.add_item(nav_css)
+            book.add_item(c)
+            chapters.append(c)
+
+        book.toc = tuple(chapters)
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+
+        book.spine = ['nav'] + chapters
+        
+        epub.write_epub(output_file, book)
+        return output_file
+
 def main():
     parser = argparse.ArgumentParser(description="OCR Fixer for 1943 Cló Gaelach")
     parser.add_argument("input_file", help="Path to input markdown file")

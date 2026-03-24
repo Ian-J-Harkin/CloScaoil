@@ -201,17 +201,37 @@ with tab2:
                 st.dataframe(results)
 
     st.divider()
-    st.header("🏆 Golden Copy Finalizer")
-    gold_target = st.text_input("Golden Copy Filename", value="Manannan_Complete_Edition.txt")
-    if st.button("✨ Generate Golden Copy"):
-        if os.path.exists(batch_output):
-            final_path = fixer.generate_golden_copy(batch_output, gold_target)
-            st.balloons()
-            st.success(f"Golden Copy created: {final_path}")
-            with open(final_path, "r", encoding="utf-8") as f:
-                st.download_button("📥 Download Golden Copy", f.read(), file_name=gold_target)
-        else:
-            st.error("Please run the Batch Process first to populate the production folder.")
+    st.header("🏆 Golden Copy Finalizer & Archival Export")
+    export_format = st.selectbox("Export Format", ["Text-Only (.txt)", "EPUB Archive (.epub)"])
+    
+    if export_format == "Text-Only (.txt)":
+        gold_target = st.text_input("Golden Copy Filename", value="Manannan_Complete_Edition.txt")
+        if st.button("✨ Generate Golden Copy"):
+            if os.path.exists(batch_output):
+                final_path = fixer.generate_golden_copy(batch_output, gold_target)
+                st.balloons()
+                st.success(f"Golden Copy created: {final_path}")
+                with open(final_path, "r", encoding="utf-8") as f:
+                    st.download_button("📥 Download Golden Copy", f.read(), file_name=gold_target)
+            else:
+                st.error("Please run the Batch Process first to populate the production folder.")
+    else:
+        gold_target = st.text_input("EPUB Filename", value="Manannan_Complete_Edition.epub")
+        if st.button("📦 Generate EPUB Archive"):
+            if os.path.exists(batch_output):
+                with st.spinner("Building EPUB (compiling HTML, embedding CSS)..."):
+                    from ocr_fixer import EpubBuilder
+                    builder = EpubBuilder()
+                    final_path = builder.generate_epub(batch_output, gold_target)
+                    if final_path:
+                        st.balloons()
+                        st.success(f"EPUB Archive created: {final_path}")
+                        with open(final_path, "rb") as f:
+                            st.download_button("📥 Download EPUB", f.read(), file_name=gold_target, mime="application/epub+zip")
+                    else:
+                        st.error("EPUB generation failed. Ensure EbookLib and markdown are installed.")
+            else:
+                st.error("Please run the Batch Process first to populate the production folder.")
 # Footer
 st.divider()
-st.markdown(f"<p style='text-align: center; color: grey;'>ClóScaoil Engine Version {OCRFixer.VERSION} | v3.3-STABLE</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; color: grey;'>ClóScaoil Engine Version {OCRFixer.VERSION} | v4.0-ARCHIVAL</p>", unsafe_allow_html=True)
