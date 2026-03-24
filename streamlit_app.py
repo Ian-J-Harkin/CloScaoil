@@ -214,4 +214,4 @@ with tab2:
             st.error("Please run the Batch Process first to populate the production folder.")
 # Footer
 st.divider()
-st.markdown(f"<p style='text-align: center; color: grey;'>ClóScaoil Engine Version {OCRFixer.VERSION} | Phase D: Production Mode</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; color: grey;'>ClóScaoil Engine Version {OCRFixer.VERSION} | v3.3-STABLE</p>", unsafe_allow_html=True)
