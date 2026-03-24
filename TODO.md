@@ -9,3 +9,4 @@
 ## 🛠️ Next Steps (Phase B)
 - [ ] **Contextual Deep Repair**: Transition from regex-based heuristics to more advanced contextual patterns for ambiguous words (e.g., better `ar` vs `ár` handling).
 - [ ] **Reporting Improvements**: Enhance the Streamlit "Ambiguous Matches" dashboard to allow one-click corrections for discovered harmony violations.
+- [ ] **User Factors Review**: Conduct a usability audit of the Streamlit interface (currently flagged as "unfriendly") to simplify the digitization workflow.

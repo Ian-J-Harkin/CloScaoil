@@ -21,7 +21,9 @@
 ## Next Session Priorities
 1. **Continue Chapter 4 Output Review:** Continue the granular proofreading of `manannan04.md`. Address the specific remaining typos by adding them to the `verified` dictionary or establishing new heuristic patterns where appropriate.
 2. **Ambiguous Words Resolution:** Address the `ar` vs. `ár` ambiguous flags logged in the generated `chapter_04_walkthrough.md` report.
-3. **Progress to Next Chapters:** Once Chapter 4 is fully signed off, apply the refined engine to subsequent chapters.
+3. **UX & User Factors Audit:** Perform a critical review of the Streamlit interface to address identified "unfriendly" usability issues and optimize the digitization workflow.
+4. **Progress to Next Chapters:** Once Chapter 4 is fully signed off, apply the refined engine to subsequent chapters.
+
 4. **Platform Independence (macOS / Linux):**
     - [ ] **Dynamic Root Discovery:** Eliminate hardcoded `C:\github` paths in `streamlit_app.py`. Use `os.getcwd()` or relative discovery.
     - [ ] **Tkinter Fallback:** Implement a `try-except` block for the `tkinter` import to provide a manual path input fallback if a GUI display is missing (common on headless Linux).
