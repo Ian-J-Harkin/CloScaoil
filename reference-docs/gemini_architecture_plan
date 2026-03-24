@@ -1,0 +1,47 @@
+A) Generalizing & Strengthening OCR Fixup Rules
+Your current ocr_fixer.py is very effective at "surgical" fixes. To make it a more powerful "general physician," we can evolve the rules from static dictionaries to pattern-based heuristics.
+
+1. Structural Regex for "Broken" Cló Gaelach
+Many OCR errors in Cló Gaelach are visually consistent across different words.
+
+The "Double Dot" Error: If the scan is noisy, a dotted consonant (e.g., ḃ) is often misread as b followed by a random punctuation mark (e.g., b', b., b*).
+
+Generalization: Instead of ".mnsan": "ansan", implement a Sliding Window Regex that identifies any lone consonant followed by a "floating" speck and maps it back to the lenited form based on a frequency dictionary.
+
+2. Morphological Awareness
+Irish has strict rules about which letters can follow others (e.g., Slender to Slender, Broad to Broad).
+
+The Vowel Harmony Check: You can strengthen the fixer by flagging words that violate caol le caol agus leathan le leathan. If a word like bádh is misread as bídh (and both are valid), but the surrounding context is past tense, the script should use a Part-of-Speech (PoS) tagger (like Saplo or CST's Irish tools) to break the tie.
+
+B) LLM Integration: The "Indirect Enrichment" Path
+Rather than letting an LLM rewrite your book (which risks "hallucinated" Irish), use it as a Linguistic Judge.
+
+1. The "Ambiguity Arbitrator"
+When ocr_fixer.py finds an ambiguous match (e.g., ar vs. ár), send the sentence to Gemini with a "Few-Shot" prompt:
+
+"In the following 1940s Irish sentence, the word marked [?] is either 'ar' (on) or 'ár' (our). Based on the grammatical context and the sci-fi theme of this novel, which is correct? Sentence: [Contextual Sentence]"
+
+2. Synthetic Ground Truth Generation
+You can use an LLM to generate thousands of sentences in modern Irish, then use a script to "downgrade" them into 1940s orthography and "noise them up" to simulate bad OCR. This creates a massive training set to fine-tune a smaller, local model specifically for Manannán.
+
+C) Can Gemini OCR Help?
+Short Answer: Yes, significantly.
+
+In 2026, Gemini 1.5 Pro has moved beyond "box-based" OCR. It uses a multimodal transformer architecture that "sees" the page as a single semantic entity.
+
+Why Gemini excels at Cló Gaelach:
+Zero-Shot Context: Unlike Tesseract, Gemini knows what a "Tironian et" (≬) is because it has seen it in Irish manuscripts during training.
+
+Visual Reasoning: If a "ponc" (dot) is faint, Tesseract sees a pixel gap. Gemini "reasons" that since the word is a verb in the past tense, that faint smudge must be a dot signifying lenition.
+
+Suggested Strategy: The "Gemini Sandwich"
+Bottom Layer (Gemini): Use the Gemini API to perform a "Raw Read" of the high-res 1940 scans. Ask it to output in JSON format, preserving the page and line numbers.
+
+Middle Layer (Your Utils): Run your ocr_fixer.py and convert_orthography.py on Gemini's output to catch any LLM hallucinations.
+
+Top Layer (Manual): Use the Streamlit "Live Preview" we built to verify the final 1%.
+
+Recommendation & Next Step
+I recommend we modify your Streamlit app to include a "Gemini Vision Pass" button. This would allow you to send a single problematic page to Gemini for a "second opinion" when the local Tesseract/Fixer pipeline is struggling.
+
+Would you like me to draft the API integration code for a "Gemini Vision" module to add to your Streamlit dashboard? (Incremental mode is still active).

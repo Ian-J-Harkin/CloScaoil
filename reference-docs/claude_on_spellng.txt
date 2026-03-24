@@ -1,0 +1,92 @@
+what do you know about An Caighdeán Oifigiúil the modernised spelling of the irish language
+
+22:50
+An Caighdeán Oifigiúil (literally "The Official Standard") is the standardised written form of the Irish language. Here's what I know about it:
+
+Origins and Development
+It was developed in the 1940s and 1950s by the Irish government's translation staff (Rannóg an Aistriúcháin) in the Oireachtas (parliament). Before its introduction, Irish had no single agreed written standard — each of the three main dialects (Munster, Connacht, and Ulster) had its own distinct spelling conventions, many of which reflected older Classical Irish orthography.
+
+The first official version was published in 1958, representing a major modernisation and simplification of the language's written form.
+
+Key Features of the Reform
+Spelling simplification was the most visible change. Old Irish spelling was heavily historical and often bore little relation to pronunciation:
+
+Silent letters and archaic consonant clusters were removed (e.g., tighearna became tiarna, meaning "lord")
+The old -idh and -igh verb endings were simplified
+Lenition was standardised using the h system (e.g., bhfuil retained, but many older forms dropped)
+Vocabulary and grammar were also partially standardised across dialects, though the Caighdeán was largely based on a compromise between the dialects rather than any single one.
+
+The initial mutations (lenition and eclipsis) were retained as core grammatical features.
+
+Relationship to the Dialects
+The Caighdeán is a written standard only — it does not replace the spoken dialects. The three living dialects remain:
+
+Munster Irish (Gaeilge na Mumhan) — Cork, Kerry, Waterford
+Connacht Irish (Gaeilge Chonnacht) — Galway, Mayo
+Ulster Irish (Gaeilge Uladh) — Donegal primarily
+Native speakers and dialect writers often diverge from the Caighdeán in their writing, and this is generally accepted in literary and informal contexts.
+
+Revised Caighdeán (2012)
+A significantly updated version — An Caighdeán Oifigiúil Athbhreithnithe — was published in 2012. This revision:
+
+Brought the standard closer to actual spoken usage
+Allowed more dialect variants officially
+Updated grammatical guidance
+Made it more accessible as a reference
+Status and Use
+It is used in all official government publications, legislation, and broadcasting (RTÉ, TG4)
+It is the form taught in schools throughout Ireland
+The Foclóir Gaeilge–Béarla (Ó Dónaill, 1977) is the standard dictionary aligned with it
+Publishers generally expect manuscripts in the Caighdeán, though exceptions exist
+Criticism
+Some native speakers and language purists have criticised it for:
+
+Favouring Connacht forms in some areas
+Flattening regional character and richness
+Being somewhat artificial compared to any living dialect
+Despite this, it has been broadly successful in giving Irish a unified written form for education, law, and media.
+
+Would you like to go deeper on any particular aspect — the grammar rules, dialect differences, the 2012 revision, or the history of Irish spelling before standardisation?
+
+are there open source dictionaries for translating the old spelling to the new?
+
+22:51
+
+Searched the web
+Searched the web
+There are some genuinely useful open source and freely available tools in this space. Here's a rundown:
+
+The Key Tool: An Caighdeánaitheoir (by Kevin Scannell)
+The most directly relevant resource is An Caighdeánaitheoir ("The Standardiser"), an open-source tool by Kevin Scannell (a computational linguist at Saint Louis University who has done an enormous amount of work on Irish NLP). It recognizes non-standard, dialectal, and archaic word forms and replaces them with forms that comply with the Official Standard of the Irish language. 
+Pota Focal
+
+You can use it online via Pota Focal at potafocal.com/cai/, and it is described as a reliable writing resource, particularly if you are trying to understand old texts and non-standard phrases. 
+Sceal
+ Crucially, it does not detect or correct errors — it merely converts text from one valid language variety to another. 
+Pota Focal
+
+The underlying source code is available on GitHub under Kevin Scannell's profile (kscanne).
+
+GaelSpell (also by Kevin Scannell)
+GaelSpell is an open-source Irish language spell checker available under the GPLv2, with all code and data available on GitHub. It recognises more than 390,000 words. 
+Cadhan
+ While it's primarily a spellchecker rather than an old→new converter, it uses phonetic encoding (via aspell) to recognise pre-standard spellings like imfhiosach and suggest the correct modern form iomasach. 
+Cadhan
+ The rule files in the repository explicitly encode old orthography patterns, making it a useful reference even as a dataset.
+
+Aimsigh.com (Irish Search Engine)
+The aimsigh.com search engine employs a sophisticated "Irish standardizer" which amounts to a finite state transducer encoding the morphological rules of non-standard Irish together with mappings to standardized forms. These rules are augmented with a large database of non-standard/standard word pairs extracted in part from a parallel corpus of English and Irish texts. 
+Cadhan
+ This means if you search for a modern spelling, it will also find documents using old spellings — a very practical application of the conversion logic.
+
+Focal.ie (National Terminology Database)
+Focal.ie is an online database of contemporary Irish words developed by Foras na Gaeilge, covering seven primary lexicographical sources spanning from the publication of the Caighdeán Oifigiúil in 1959 right up to today's contemporary online sources. 
+Focal
+ While not strictly an old→new converter, it's a useful cross-reference resource.
+
+Early Irish Lemmatizer (GitHub)
+For older material (Old and Middle Irish rather than pre-Caighdeán Modern Irish), there's the early-irish-lemmatizer on GitHub by ancatmara. It is based on the eDIL (Electronic Dictionary of the Irish Language) and shows about 80% accuracy on texts that follow classical Old Irish orthography, though it performs poorly on Middle and Early Modern Irish texts. 
+GitHub
+
+In summary, Kevin Scannell's work is really the centrepiece of open-source Irish language technology in this area — his Caighdeánaitheoir and GaelSpell are the go-to tools, and his GitHub (github.com/kscanne) is worth exploring if you want to work with the underlying data programmatically. Are you looking to use these tools for a specific project?
+
