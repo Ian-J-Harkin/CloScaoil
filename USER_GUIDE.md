@@ -26,6 +26,31 @@ To enable the **LLM Providers** (Automated Choice Resolution, Vision, Modernizat
 3. **Streamlit Cloud (Optional):**  
    If deploying to Streamlit Cloud, add the keys directly to your app's "Secrets" dashboard.
 
+### 🧪 Option 1: Single Page Lab
+The laboratory is designed for testing individual snippets or verifying specific pages.
+1. **Lab Mode:** Paste a snippet into the **"📥 Raw OCR Input"** text area.
+2. **Settings:** Use the sidebar to toggle **Expand Abbreviations**, **Strict Mode**, or **2012 Modernization**.
+3. **Universal LLM:** Select your preferred **Provider** (Gemini, OpenAI, Claude, or OpenRouter) and **Model Name** in the sidebar.
+4. **Audit:** If prompted with a warning, trigger a visual audit to cross-reference with manuscript scans.
+5. **Export:** Copy the corrected text from the **"🚀 Output Preview"** panel.
+
+---
+
+## 🌐 Universal LLM Integration (v5.0)
+
+ClóScaoil v5.0 now supports multiple LLM providers via **LiteLLM**, removing vendor lock-in and allowing you to use the most effective model for Irish orthography.
+
+### ⚙️ Available Providers
+- **Gemini (Default):** Requires `GEMINI_API_KEY`. Excellent for vision-intensive audits.
+- **OpenAI:** Requires `OPENAI_API_KEY`.
+- **Anthropic (Claude):** Requires `ANTHROPIC_API_KEY`. Excellent for nuanced grammatical modernization.
+- **OpenRouter:** Requires `OPENROUTER_API_KEY`. Allows access to a massive library of models through a single endpoint.
+
+### ⚠️ API Key Management
+Ensure your keys are set as Operating System environment variables. If a key is missing for your selected provider, the engine will display a warning in the sidebar.
+
+---
+
 ### 📦 Option 2: Full-Book Batch Production
 For high-scale processing of the entire manuscript:
 1.  **Tab:** Select the **"🚀 Batch Production"** tab in the UI.
@@ -70,6 +95,22 @@ If a word is unmapped, the engine applies visual "Speck Fixing." It identifies l
 The final processed word is checked against the Irish **"Caol le Caol" (Slender with Slender)** rule. 
 - **The Rule:** Broad vowels (`a`, `o`, `u`) must match broad, and slender vowels (`e`, `i`) must match slender across consonant clusters.
 - **Anomaly Reporting:** Words failing this check are flagged with a `⚠️` icon in the Anomaly Dashboard and highlighted with `==word==` in the output if **Strict Mode** is active.
+
+---
+
+## 🛡️ Phase G: 2012 Caighdeán Modernization
+
+ClóScaoil v5.0 introduces an optional final pass to translate the **1950s "New Orthography"** into the **2012 Official Revised Standard** (*An Caighdeán Oifigiúil Athbhreithnithe 2012*).
+
+### ✨ Key Modernization Features
+1.  **Lexical Simplification:** Automatic swapping of mid-century clusters for modern equivalents (e.g., `beirbhiughadh` ➔ `beiriú`, `tráigh` ➔ `trá`).
+2.  **Nominative Object Permittance:** The engine identifies the `ag [Verbal Noun] [Noun]` pattern and applies the 2012 "Nominative-for-Genitive" rule (e.g., `ag glanadh fuinneoige` ➔ `ag glanadh fuinneog`) using specialized LLM prompts.
+3.  **Synthetic-to-Analytic Verbs:** Updates archaic 1st-person plural past tense verbs to their modern analytical counterparts (e.g., `mholamar` ➔ `mhol muid`).
+
+### 🔘 Enabling Modernization
+Toggle the **"✨ 2012 Standard Modernization"** switch in the sidebar. When active:
+- Modernized words are tracked in the resolution log as `type: modernized`.
+- The UI displays success banners detailing the transformation (e.g., `**2012 Standard:** word ➔ modern_form`).
 
 ---
 

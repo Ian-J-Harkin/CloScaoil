@@ -21,10 +21,10 @@ def fixer():
     with open(config_path, 'w', encoding='utf-8') as f:
         json.dump(mock_data, f)
         
-    return OCRFixer(config_path)
+    return OCRFixer(config_path, model_name="gemini/gemini-1.5-flash")
 
 def test_version(fixer):
-    assert fixer.VERSION == "3.0-VISION"
+    assert fixer.VERSION == "5.0-UNIVERSAL"
 
 def test_shorthand_normalization(fixer):
     # Test line boundaries
@@ -57,7 +57,7 @@ def test_violation_gating(fixer):
 def test_path_normalization(fixer):
     # Verify that paths are normalized using os.path.join and getcwd logic
     from ocr_fixer import AmbiguityArbitrator
-    arb = AmbiguityArbitrator(api_key=None)
+    arb = AmbiguityArbitrator(api_key=None, model_name="gemini/gemini-1.5-flash")
     assert os.path.isabs(arb.cache_path)
     assert "config" in arb.cache_path
 
@@ -133,3 +133,6 @@ def test_golden_copy_logic(fixer):
             assert "PROCESSED BY CLÓSCAOIL" in content
     finally:
         shutil.rmtree(tmp_in)
+
+if __name__ == "__main__":
+    pytest.main([__file__])
