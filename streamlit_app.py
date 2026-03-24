@@ -2,10 +2,6 @@ import streamlit as st
 import os
 import json
 from ocr_fixer import OCRFixer
-from dotenv import load_dotenv
-
-load_dotenv()
-
 # Page Configuration - Premium Aesthetics
 st.set_page_config(
     page_title="ClóScaoil Engine v2.0",
@@ -49,7 +45,9 @@ def get_fixer():
     if not os.path.exists(config_path):
         st.error(f"Configuration file not found at {config_path}")
         return None
-    api_key = st.secrets.get("GEMINI_API_KEY") if "GEMINI_API_KEY" in st.secrets else os.environ.get("GEMINI_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key and "GEMINI_API_KEY" in st.secrets:
+        api_key = st.secrets["GEMINI_API_KEY"]
     return OCRFixer(config_path, api_key=api_key)
 
 fixer = get_fixer()
