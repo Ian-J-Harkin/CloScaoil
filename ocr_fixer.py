@@ -14,6 +14,37 @@ class OCRFixer:
         self.arbitrator = AmbiguityArbitrator(api_key) if api_key else None
         self.vision_auditor = GeminiVisionAuditor(api_key) if api_key else None
         print(f"INFO: Initializing OCRFixer {self.VERSION}", file=sys.stderr)
+
+    def generate_golden_copy(self, input_dir, output_file):
+        """Consolidates all corrected fragments into a single reading edition."""
+        import unicodedata
+        import datetime
+        all_text = []
+        files = sorted([f for f in os.listdir(input_dir) if f.endswith('.md')])
+        
+        for filename in files:
+            path = os.path.join(input_dir, filename)
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Strip page markers
+                content = re.sub(r'\[l\.\d+\]: #\s*', '', content)
+                all_text.append(content)
+        
+        full_text = "\n".join(all_text)
+        # Final de-hyphenation and cleaning
+        full_text = self.dehyphenate(full_text)
+        # Unicode NFC Normalization
+        full_text = unicodedata.normalize('NFC', full_text)
+        
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d")
+        header = (
+            f"--- PROCESSED BY CLÓSCAOIL {self.VERSION} ---\n"
+            f"--- DATA PERSISTENCE ENABLED | DATE: {timestamp} ---\n\n"
+        )
+        
+        with open(output_file, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(header + full_text)
+        return output_file
     
     def load_config(self, path):
         if not os.path.exists(path):
@@ -329,6 +360,80 @@ class GeminiVisionAuditor:
             print(f"WARN: Vision Audit failed: {e}", file=sys.stderr)
             
         return current_text
+
+class BatchProcessor:
+    def __init__(self, fixer):
+        self.fixer = fixer
+
+    def process_directory(self, input_path, output_path, scan_dir=None, audit_policy="manual"):
+        """
+        Processes an entire folder of markdown files.
+        audit_policy: "manual" (no auto vision) or "always" (auto triggers Gemini if noise > 5)
+        """
+        os.makedirs(output_path, exist_ok=True)
+        results_log = []
+        
+        # Sort files to maintain manuscript order
+        files = sorted([f for f in os.listdir(input_path) if f.endswith('.md')])
+        
+        for filename in files:
+            in_file = os.path.join(input_path, filename)
+            out_file = os.path.join(output_path, filename)
+            
+            with open(in_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            processed, patterns, requires_audit = self.fixer.process_text(content, file_path=in_file)
+            
+            # Silent Mode Policy (Phase D)
+            audit_performed = False
+            if requires_audit and audit_policy == "always" and self.fixer.vision_auditor:
+                page_num = 0
+                m = re.search(r'\[l\.(\d+)\]: #', content)
+                if m: page_num = int(m.group(1))
+                
+                img_path = self._find_image(scan_dir, page_num)
+                if img_path:
+                    with open(img_path, 'rb') as img_f:
+                        img_bytes = img_f.read()
+                        processed = self.fixer.vision_auditor.perform_visual_audit(img_bytes, processed)
+                        audit_performed = True
+            
+            with open(out_file, 'w', encoding='utf-8', newline='\n') as f:
+                f.write(processed)
+            
+            results_log.append({
+                "file": filename,
+                "anomalies": len(patterns),
+                "requires_audit": requires_audit,
+                "audit_performed": audit_performed,
+                "status": "Verified" if audit_performed else "Heuristic Approved"
+            })
+        
+        # Persistence Hardening: Project log for human sign-off
+        log_path = os.path.join(output_path, "production_log.json")
+        with open(log_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "meta": {
+                    "engine": f"ClóScaoil {self.fixer.VERSION}",
+                    "policy": audit_policy,
+                    "count": len(files)
+                },
+                "batch_results": results_log
+            }, f, indent=2, ensure_ascii=False)
+            
+        return results_log
+
+    def _find_image(self, directory, page_num):
+        if not directory or not os.path.exists(directory):
+            return None
+        page_str = str(page_num).zfill(3)
+        possible_names = [f"page_{page_str}.jpg", f"page_{page_str}.png", f"{page_num}.jpg", f"{page_num}.png"]
+        for name in possible_names:
+            full_path = os.path.join(directory, name)
+            if os.path.exists(full_path):
+                return full_path
+        return None
 
 def main():
     parser = argparse.ArgumentParser(description="OCR Fixer for 1943 Cló Gaelach")

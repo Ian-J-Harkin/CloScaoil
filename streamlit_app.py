@@ -35,13 +35,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title & Description
-st.title("🛡️ ClóScaoil Engine (v2.0)")
+st.title("🛡️ ClóScaoil Engine (v3.1-PRODUCTION)")
 st.caption("Manannán Digitization Lab | Surgical OCR Correction & Heuristic Intelligence")
 
 # Initialize Engine
 @st.cache_resource
 def get_fixer():
-    config_path = os.path.join("config", "corrections_dict.json")
+    config_path = os.path.join(os.getcwd(), "config", "corrections_dict.json")
     if not os.path.exists(config_path):
         st.error(f"Configuration file not found at {config_path}")
         return None
@@ -52,7 +52,7 @@ def get_fixer():
 
 fixer = get_fixer()
 
-# Sidebar Configuration & Anomaly Dashboard
+# Sidebar Configuration
 with st.sidebar:
     st.header("⚙️ Configuration")
     expand_abbr = st.toggle(
@@ -73,145 +73,144 @@ with st.sidebar:
         value=os.path.join(os.getcwd(), "scans"),
         help="Local path where page images (page_045.jpg or 45.png) are stored."
     )
-    
-    st.divider()
-    st.header("🔍 Anomaly Dashboard")
-    # Placeholder for the dynamic anomaly list
-    anomaly_placeholder = st.empty()
 
-# Main Interface Layout
-col1, col2 = st.columns([1, 1], gap="large")
+# Main Interface Tabs
+tab1, tab2 = st.tabs(["🧪 Single Page Lab", "🚀 Batch Production"])
 
-with col1:
-    st.subheader("📥 Raw OCR Input")
-    raw_text = st.text_area(
-        "Paste OCR text for processing...", 
-        height=400, 
-        placeholder="e.g., [l.30]: #\n7 d'dubairt sé... 'manannán' d'éirig..."
-    )
+with tab1:
+    col1, col2 = st.columns([1, 1], gap="large")
 
-def find_page_image(directory, page_num):
-    if not directory or not os.path.exists(directory):
-        return None
-    page_str = str(page_num).zfill(3)
-    possible_names = [f"page_{page_str}.jpg", f"page_{page_str}.png", f"{page_num}.jpg", f"{page_num}.png"]
-    for name in possible_names:
-        full_path = os.path.join(directory, name)
-        if os.path.exists(full_path):
-            return full_path
-    return None
+    with col1:
+        st.subheader("📥 Raw OCR Input")
+        raw_text = st.text_area(
+            "Paste OCR text for processing...", 
+            height=400, 
+            key="lab_input",
+            placeholder="e.g., [l.30]: #\n7 d'dubairt sé... 'manannán' d'éirig..."
+        )
 
-# Logic Execution
-if raw_text and fixer:
-    # Track vision audit state & Synchronization (v3.1)
-    if "vision_corrected_text" not in st.session_state:
-        st.session_state.vision_corrected_text = None
-    if "last_raw_text" not in st.session_state:
-        st.session_state.last_raw_text = None
-        
-    if raw_text != st.session_state.last_raw_text:
-        st.session_state.vision_corrected_text = None
-        st.session_state.last_raw_text = raw_text
-    
-    # Process text using the engine
-    # In Phase C, process_text returns 3 values
-    processed_text, anomalies, requires_audit = fixer.process_text(
-        raw_text, 
-        expand_abbreviations=expand_abbr, 
-        strict_mode=strict_mode
-    )
-    
-    # Image Sourcing Logic
-    page_num = 0
-    m = re.search(r'\[l\.(\d+)\]: #', raw_text)
-    if m: page_num = int(m.group(1))
-    
-    img_path = find_page_image(scan_dir, page_num)
-    image_bytes = None
-    
-    if img_path:
-        st.image(img_path, caption=f"Manual Scan: Page {page_num}", use_container_width=True)
-        with open(img_path, "rb") as f:
-            image_bytes = f.read()
-    else:
-        uploaded_file = st.file_uploader(f"📤 Upload Scan for Page {page_num}", type=["jpg", "png"])
-        if uploaded_file:
-            image_bytes = uploaded_file.getvalue()
-            st.image(image_bytes, caption=f"Uploaded Scan: Page {page_num}", use_container_width=True)
-
-    # Use vision corrected text if available
-    final_output_text = st.session_state.vision_corrected_text or processed_text
-
-    # High Error Density Gating
-    if requires_audit and not st.session_state.vision_corrected_text:
-        st.warning("⚠️ High Error Density detected. Many words fail linguistic validation.")
-        if image_bytes:
-            if st.button("🔍 Trigger Gemini Visual Audit", help="Uses Gemini 1.5 Pro to compare OCR with the original scan."):
-                with st.spinner("Analyzing scan with Gemini 1.5 Pro..."):
-                    corrected = fixer.vision_auditor.perform_visual_audit(image_bytes, processed_text)
-                    st.session_state.vision_corrected_text = corrected
-                    st.rerun()
-        else:
-            st.info("💡 Upload a scan to enable Gemini Visual Audit.")
-
-    if st.session_state.vision_corrected_text:
-        if st.button("🔄 Reset to Heuristic Output"):
+    # Logic Execution (Single Page)
+    if raw_text and fixer:
+        # Track vision audit state & Synchronization (v3.1)
+        if "vision_corrected_text" not in st.session_state:
             st.session_state.vision_corrected_text = None
-            st.rerun()
-    
-    with col2:
-        st.subheader("🚀 ClóScaoil Output")
-        
-        if not strict_mode:
-            display_text = final_output_text.replace("==", "")
-        else:
-            import re
-            # Convert ==word== to <mark>word</mark>
-            display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", final_output_text)
-            # v3.1 Sanitation: Strip any residual 'Ghost Markers'
-            display_text = display_text.replace("==", "")
+        if "last_raw_text" not in st.session_state:
+            st.session_state.last_raw_text = None
             
-        st.markdown(display_text, unsafe_allow_html=True)
+        if raw_text != st.session_state.last_raw_text:
+            st.session_state.vision_corrected_text = None
+            st.session_state.last_raw_text = raw_text
         
-    # Populate the Anomaly Sidebar Dashboard
-    with anomaly_placeholder.container():
-        harmony_violations = [a for a in anomalies if a['type'] == 'harmony_violation']
-        ambiguous_matches = [a for a in anomalies if a['type'] == 'ambiguous']
+        # Process text using the engine
+        processed_text, anomalies, requires_audit = fixer.process_text(
+            raw_text, 
+            expand_abbreviations=expand_abbr, 
+            strict_mode=strict_mode
+        )
         
-        if harmony_violations:
-            st.warning(f"⚠️ {len(harmony_violations)} Harmony Violations")
-            for v in harmony_violations[:20]: # Show top 20 for performance
-                with st.expander(f"Violation: {v['word']}"):
-                    st.write(f"**Context:** _{v['context']}_")
-                    st.write(f"**Line:** {v['line']}")
-            if len(harmony_violations) > 20:
-                st.info(f"Showing first 20 of {len(harmony_violations)} violations.")
+        # Image Sourcing Logic
+        page_num = 0
+        m = re.search(r'\[l\.(\d+)\]: #', raw_text)
+        if m: page_num = int(m.group(1))
+        
+        # Simplified find logic for Lab
+        # Using the helper if we moved it, but let's just do it here for now
+        page_str = str(page_num).zfill(3)
+        img_path = None
+        for name in [f"page_{page_str}.jpg", f"page_{page_str}.png", f"{page_num}.jpg", f"{page_num}.png"]:
+            path = os.path.join(scan_dir, name)
+            if os.path.exists(path):
+                img_path = path
+                break
+        
+        image_bytes = None
+        if img_path:
+            with col1:
+                st.image(img_path, caption=f"Matched Scan: Page {page_num}", use_container_width=True)
+                with open(img_path, "rb") as f:
+                    image_bytes = f.read()
         else:
-            st.success("No Vowel Harmony violations detected.")
+            with col1:
+                uploaded_file = st.file_uploader(f"📤 Upload Scan (Page {page_num})", type=["jpg", "png"])
+                if uploaded_file:
+                    image_bytes = uploaded_file.getvalue()
+                    st.image(image_bytes, caption=f"Uploaded Scan: Page {page_num}", use_container_width=True)
 
-        if ambiguous_matches:
-            st.divider()
-            st.error(f"❓ {len(ambiguous_matches)} Ambiguous Matches")
-            for m in ambiguous_matches:
-                st.selectbox(
-                    f"Resolve: {m['word']} (Line {m['line']})", 
-                    m['options'], 
-                    key=f"amb_{m['line']}_{m['word']}_{hash(m['context'])}"
-                )
+        final_output_text = st.session_state.vision_corrected_text or processed_text
+
+        # Gating
+        if requires_audit and not st.session_state.vision_corrected_text:
+            with col1:
+                st.warning("⚠️ High Error Density: Many words fail linguistic validation.")
+                if image_bytes:
+                    if st.button("🔍 Trigger Gemini Visual Audit"):
+                        with st.spinner("Analyzing with Gemini 1.5 Pro..."):
+                            corrected = fixer.vision_auditor.perform_visual_audit(image_bytes, processed_text)
+                            st.session_state.vision_corrected_text = corrected
+                            st.rerun()
+
+        if st.session_state.vision_corrected_text:
+            with col1:
+                if st.button("🔄 Reset to Heuristic Output"):
+                    st.session_state.vision_corrected_text = None
+                    st.rerun()
         
-        # New: 🤖 Automated Resolutions section
-        auto_fixed = [a for a in anomalies if a['type'] == 'auto_fixed']
-        if auto_fixed:
-            st.divider()
-            st.header("🤖 Automated Resolutions")
-            for f in auto_fixed:
-                st.success(f"[Line {f['line']}]: Fixed '{f['word']}' -> '{f['fix']}'.")
-else:
-    with col2:
-        st.info("Final output will be displayed here in real-time as you paste text.")
-    with anomaly_placeholder:
-        st.info("Awaiting input to generate linguistic analysis.")
+        with col2:
+            st.subheader("🚀 Output Preview")
+            if not strict_mode:
+                display_text = final_output_text.replace("==", "")
+            else:
+                import re
+                display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", final_output_text)
+                display_text = display_text.replace("==", "")
+            st.markdown(display_text, unsafe_allow_html=True)
+            
+            # Anomaly Log (Dashboard within the Lab view)
+            if anomalies:
+                st.divider()
+                st.subheader("📋 Session Analysis")
+                for a in anomalies:
+                    if a['type'] == 'auto_fixed':
+                        st.info(f"**Auto-Fixed:** {a['word']} ➔ {a['fix']}")
+                    elif a['type'] == 'harmony_violation':
+                        st.error(f"**Harmony Violation:** {a['word']}")
+    else:
+        with col2:
+            st.info("Awaiting input to generate linguistic analysis.")
 
+with tab2:
+    st.header("📦 Batch Production Pipeline")
+    st.info("Process an entire directory of manuscript chapters with automated Vision Audit policies.")
+    
+    batch_col1, batch_col2 = st.columns(2)
+    with batch_col1:
+        batch_input = st.text_input("Input Directory", value=os.path.join(os.getcwd(), "caibidlí"), key="batch_in")
+        batch_output = st.text_input("Output Directory", value=os.path.join(os.getcwd(), "production"), key="batch_out")
+    
+    with batch_col2:
+        audit_policy = st.selectbox("Vision Audit Policy", ["manual", "always"], 
+                                  help="'always' triggers Gemini Vision automatically if noise > 5.")
+        if st.button("▶️ Start Batch Run", type="primary"):
+            from ocr_fixer import BatchProcessor
+            processor = BatchProcessor(fixer)
+            with st.status("Processing Batch...", expanded=True) as status:
+                results = processor.process_directory(batch_input, batch_output, scan_dir=scan_dir, audit_policy=audit_policy)
+                status.update(label="Batch Complete!", state="complete")
+                st.success(f"Processed {len(results)} pages into '{batch_output}'")
+                st.dataframe(results)
+
+    st.divider()
+    st.header("🏆 Golden Copy Finalizer")
+    gold_target = st.text_input("Golden Copy Filename", value="Manannan_Complete_Edition.txt")
+    if st.button("✨ Generate Golden Copy"):
+        if os.path.exists(batch_output):
+            final_path = fixer.generate_golden_copy(batch_output, gold_target)
+            st.balloons()
+            st.success(f"Golden Copy created: {final_path}")
+            with open(final_path, "r", encoding="utf-8") as f:
+                st.download_button("📥 Download Golden Copy", f.read(), file_name=gold_target)
+        else:
+            st.error("Please run the Batch Process first to populate the production folder.")
 # Footer
 st.divider()
-st.markdown(f"<p style='text-align: center; color: grey;'>ClóScaoil Engine Version {OCRFixer.VERSION} | Phase A Phase Complete</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; color: grey;'>ClóScaoil Engine Version {OCRFixer.VERSION} | Phase D: Production Mode</p>", unsafe_allow_html=True)
