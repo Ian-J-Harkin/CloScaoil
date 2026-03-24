@@ -70,8 +70,27 @@ The dashboard categories help you resolve issues the engine cannot fix automatic
 
 | Type | Indicator | Action Needed |
 | :--- | :--- | :--- |
-| **Harmony Violation** | `⚠️` | A potential spelling error or OCR misread (e.g., `fílan` instead of `fionn`). Manually verify spelling. |
-| **Ambiguous Match** | `❓` | A word with multiple valid corrections (e.g., `ar` vs `ár`). Use the dropdown menu to select the correct form. |
+| **Harmony Violation** | `⚠️` | A potential spelling error or OCR misread. Manually verify spelling. |
+| **Ambiguous Match** | `❓` | Multiple valid corrections. Use the dropdown to select the correct form. |
+| **Gated Vision Audit** | `⚠️ Warning` | Appears when >5 violations are detected. Trigger a manual **Gemini Visual Audit**. |
+
+---
+
+## 📽️ Multimodal Vision Support (3.0-VISION)
+
+ClóScaoil v3.0 introduces a **Vision Auditor** capable of cross-referencing your text with original manuscript scans using Gemini 1.5 Pro.
+
+### 🖼️ Automated Image Sourcing
+1.  **Define Workspace:** Set your **Scan Directory** in the sidebar (default: `scans/`).
+2.  **Matching Logic:** The engine automatically searches for images matching the `[l.XXX]` page number (e.g., `page_045.jpg` or `45.png`).
+3.  **Manual Upload:** If no local file is found, use the **"Upload Scan"** widget above the output preview.
+
+### 🔍 Triggering a Visual Audit
+If the engine detects a **High Error Density** (>5 linguistic violations), it will interrupt the output with a warning.
+1.  Ensure an image is loaded (either via directory matching or upload).
+2.  Click **"Trigger Gemini Visual Audit"**.
+3.  Gemini 1.5 Pro will analyze the "ponc" dots and shorthands in the scan and return a corrected transcription.
+4.  Review the result and choose to either **Accept** or **Reset** to heuristic output.
 
 ---
 
