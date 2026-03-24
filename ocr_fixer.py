@@ -5,9 +5,12 @@ import argparse
 import sys
 
 class OCRFixer:
+    VERSION = "2.0-CLÓSCAOIL"  # Set to "1.0-SURGICAL" for legacy/dictionary-only baseline
+
     def __init__(self, config_path):
         self.config_path = config_path
         self.data = self.load_config(config_path)
+        print(f"INFO: Initializing OCRFixer {self.VERSION}", file=sys.stderr)
     
     def load_config(self, path):
         if not os.path.exists(path):

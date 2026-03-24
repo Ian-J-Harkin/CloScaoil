@@ -1,8 +1,9 @@
 {
   "metadata": {
-    "project": "Manannán 1943",
-    "last_updated": "2026-03-16",
-    "version": "1.2"
+    "project": "Manannán / ClóScaoil Engine",
+    "last_updated": "2026-03-24",
+    "version": "1.2-PRE_PHASE_A",
+    "engine_requirement": ">=2.0"
   },
   "global_replacements": {
     "chars": {
