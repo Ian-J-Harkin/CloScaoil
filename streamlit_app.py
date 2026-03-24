@@ -166,9 +166,9 @@ with tab1:
             with col1:
                 st.warning("⚠️ High Error Density: Many words fail linguistic validation.")
                 if image_bytes:
-                    if st.button("🔍 Trigger Gemini Visual Audit"):
-                        with st.spinner("Analyzing with Gemini 1.5 Pro..."):
-                            corrected = fixer.vision_auditor.perform_visual_audit(image_bytes, processed_text)
+                    if st.button("🔍 Trigger LLM Visual Audit"):
+                        with st.spinner(f"Analyzing with {fixer.model_name}..."):
+                            corrected = fixer.llm_manager.perform_visual_audit(image_bytes, processed_text)
                             st.session_state.vision_corrected_text = corrected
                             st.rerun()
 
@@ -220,7 +220,10 @@ with tab2:
             from ocr_fixer import BatchProcessor
             processor = BatchProcessor(fixer)
             with st.status("Processing Batch...", expanded=True) as status:
-                results = processor.process_directory(batch_input, batch_output, scan_dir=scan_dir, audit_policy=audit_policy)
+                results = processor.process_directory(
+                    batch_input, batch_output, scan_dir=scan_dir, audit_policy=audit_policy,
+                    expand_abbreviations=expand_abbr, strict_mode=strict_mode, modernize_2012=modernize_2012
+                )
                 status.update(label="Batch Complete!", state="complete")
                 st.success(f"Processed {len(results)} pages into '{batch_output}'")
                 st.dataframe(results)

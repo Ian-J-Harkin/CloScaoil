@@ -15,9 +15,8 @@ class OCRFixer:
         self.data = self.load_config(config_path)
         self.api_key = api_key
         self.model_name = model_name
-        self.arbitrator = AmbiguityArbitrator(api_key, model_name)
-        self.vision_auditor = UniversalVisionAuditor(api_key, model_name)
-        self.modernizer = StandardModernizer(api_key, model_name)
+        self.llm_manager = UniversalLLMManager(api_key, model_name)
+        self.modernizer = StandardModernizer(self.llm_manager)
         print(f"INFO: Initializing OCRFixer {self.VERSION}", file=sys.stderr)
 
     def generate_golden_copy(self, input_dir, output_file):
@@ -205,9 +204,7 @@ class OCRFixer:
                         new_line_parts.append(verified[part])
                         continue
                     if part in ambiguous:
-                        resolution = None
-                        if self.arbitrator:
-                            resolution = self.arbitrator.resolve(part, ambiguous[part], line.strip())
+                        resolution = self.llm_manager.resolve_ambiguity(part, ambiguous[part], line.strip())
                         
                         if resolution:
                             new_patterns.append({
@@ -278,31 +275,28 @@ class OCRFixer:
             
         return "\n".join(final_output), new_patterns, requires_visual_audit
 
-class AmbiguityArbitrator:
+class UniversalLLMManager:
     def __init__(self, api_key, model_name):
         self.api_key = api_key
-        # Platform independent path
-        self.cache_path = os.path.join(os.getcwd(), "config", "resolution_cache.json")
-        self.cache = self.load_cache()
         self.model = model_name
+        self.cache_path = os.path.join(os.getcwd(), "config", "resolution_cache.json")
+        self.cache = self._load_cache()
 
-    def load_cache(self):
+    def _load_cache(self):
         if os.path.exists(self.cache_path):
             with open(self.cache_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return {}
 
-    def save_cache(self):
+    def _save_cache(self):
         with open(self.cache_path, 'w', encoding='utf-8') as f:
             json.dump(self.cache, f, indent=2, ensure_ascii=False)
 
-    def resolve(self, word, options, context_sentence):
+    def resolve_ambiguity(self, word, options, context_sentence):
         if not self.model:
             return None
         
-        # 3-word context for caching
         words = context_sentence.split()
-        # Find the word (or similar) in the split words
         target_idx = -1
         for idx, w in enumerate(words):
             if word in w:
@@ -328,32 +322,23 @@ class AmbiguityArbitrator:
         )
         
         try:
-            kwargs = {}
-            if self.api_key:
-                kwargs["api_key"] = self.api_key
+            kwargs = {"api_key": self.api_key} if self.api_key else {}
             response = litellm.completion(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 **kwargs
             )
             result = response.choices[0].message.content.strip()
-            # Clean up potential markdown or extra text
             result = re.sub(r'[^a-záéíóúḃċḋḟġṁṗṡṫÁÉÍÓÚḂĊḊḞĠṀṖṠṪ]', '', result)
             
             if result in options:
                 if cache_key:
                     self.cache[cache_key] = result
-                    self.save_cache()
+                    self._save_cache()
                 return result
         except Exception as e:
-            print(f"WARN: LLM Arbitrator failed: {e}", file=sys.stderr)
-        
+            print(f"WARN: LLM resolve_ambiguity failed: {e}", file=sys.stderr)
         return None
-
-class UniversalVisionAuditor:
-    def __init__(self, api_key, model_name):
-        self.api_key = api_key
-        self.model = model_name
 
     def perform_visual_audit(self, image_bytes, current_text):
         if not self.model:
@@ -377,23 +362,38 @@ class UniversalVisionAuditor:
                     ]
                 }
             ]
-            kwargs = {}
-            if self.api_key:
-                kwargs["api_key"] = self.api_key
+            kwargs = {"api_key": self.api_key} if self.api_key else {}
             response = litellm.completion(model=self.model, messages=messages, **kwargs)
             if response.choices[0].message.content:
                 return response.choices[0].message.content.strip()
         except Exception as e:
             print(f"WARN: Vision Audit failed: {e}", file=sys.stderr)
-            
         return current_text
 
+    def modernize_sentence(self, sentence):
+        if not self.model:
+            return sentence
+        
+        prompt = (
+            "You are an editor for Rannóg an Aistriúcháin. Update this 1958 Irish text "
+            "to the 2012 Official Standard. Focus on replacing synthetic verb forms (e.g., 'mholamar' to 'mhol muid') "
+            "and applying nominative objects for verbal nouns where permitted.\n"
+            "Return ONLY the updated text. Original text:\n" + sentence
+        )
+        try:
+            kwargs = {"api_key": self.api_key} if self.api_key else {}
+            response = litellm.completion(model=self.model, messages=[{"role": "user", "content": prompt}], **kwargs)
+            if response.choices[0].message.content:
+                return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"WARN: StandardModernizer LLM failed: {e}", file=sys.stderr)
+        return sentence
+
 class StandardModernizer:
-    def __init__(self, api_key, model_name):
+    def __init__(self, llm_manager):
         self.config_path = os.path.join(os.getcwd(), "config", "caighdean_2012.json")
         self.data = self._load_map()
-        self.api_key = api_key
-        self.model = model_name
+        self.llm_manager = llm_manager
 
     def _load_map(self):
         if os.path.exists(self.config_path):
@@ -415,34 +415,15 @@ class StandardModernizer:
     def modernize_line(self, line):
         # Regex-based "Nominative-for-Genitive" detector
         if re.search(r'\b(?:ag|do)\s+\w+\s+\w+', line, re.IGNORECASE):
-            if self.model:
-                prompt = (
-                    "You are an editor for Rannóg an Aistriúcháin. Update the following 1958 Irish text "
-                    "to An Caighdeán Oifigiúil Athbhreithnithe (2012) standards. Focus on Nominative-for-Genitive substitutions "
-                    "(e.g., 'ag glanadh fuinneoige' -> 'ag glanadh fuinneog') and replace synthetic verb forms (mholamar) "
-                    "with analytic forms (mhol muid).\n"
-                    "Return ONLY the updated text. Original text:\n" + line
-                )
-                try:
-                    kwargs = {}
-                    if self.api_key:
-                        kwargs["api_key"] = self.api_key
-                    res = litellm.completion(
-                        model=self.model,
-                        messages=[{"role": "user", "content": prompt}],
-                        **kwargs
-                    )
-                    if res.choices[0].message.content:
-                        line = res.choices[0].message.content.strip()
-                except Exception as e:
-                    print(f"WARN: StandardModernizer LLM failed: {e}", file=sys.stderr)
+            line = self.llm_manager.modernize_sentence(line)
         return line
 
 class BatchProcessor:
     def __init__(self, fixer):
         self.fixer = fixer
 
-    def process_directory(self, input_path, output_path, scan_dir=None, audit_policy="manual"):
+    def process_directory(self, input_path, output_path, scan_dir=None, audit_policy="manual", 
+                          expand_abbreviations=False, strict_mode=False, modernize_2012=False):
         """
         Processes an entire folder of markdown files.
         audit_policy: "manual" (no auto vision) or "always" (auto triggers Gemini if noise > 5)
@@ -460,11 +441,16 @@ class BatchProcessor:
             with open(in_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            processed, patterns, requires_audit = self.fixer.process_text(content, file_path=in_file)
+            processed, patterns, requires_audit = self.fixer.process_text(
+                content, file_path=in_file, 
+                expand_abbreviations=expand_abbreviations,
+                strict_mode=strict_mode,
+                modernize_2012=modernize_2012
+            )
             
             # Silent Mode Policy (Phase D)
             audit_performed = False
-            if requires_audit and audit_policy == "always" and self.fixer.vision_auditor:
+            if requires_audit and audit_policy == "always" and self.fixer.llm_manager:
                 page_num = 0
                 m = re.search(r'\[l\.(\d+)\]: #', content)
                 if m: page_num = int(m.group(1))
@@ -473,7 +459,7 @@ class BatchProcessor:
                 if img_path:
                     with open(img_path, 'rb') as img_f:
                         img_bytes = img_f.read()
-                        processed = self.fixer.vision_auditor.perform_visual_audit(img_bytes, processed)
+                        processed = self.fixer.llm_manager.perform_visual_audit(img_bytes, processed)
                         audit_performed = True
                         # Throttling to avoid API rate limits
                         time.sleep(1)
