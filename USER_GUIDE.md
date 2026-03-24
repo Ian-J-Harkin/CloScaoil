@@ -1,7 +1,7 @@
-# 🛡️ ClóScaoil Engine (v3.3-STABLE) User Guide
-**Manannán Digitization Lab | Phase D: Production Hardening**
+# 🛡️ ClóScaoil Engine (v5.1-ARCHIVAL STABLE) User Guide
+**Manannán Digitization Lab | Universal LLM Integration & 2012 Caighdeán Modernization**
 
-Welcome to the **ClóScaoil Engine**, the surgical OCR correction system designed specifically for the 1943 Cló Gaelach (Gaelic Type) digitization of the *Manannán* series. This engine transitions from a single-page "Laboratory" to a full-book **Production Pipeline** with **LLM Vision** and **Batch Automation**.
+Welcome to the **ClóScaoil Engine**, the surgical OCR correction system designed specifically for the 1943 Cló Gaelach (Gaelic Type) digitization of the *Manannán* series. This engine provides a complete pipeline — from single-page "Laboratory" testing to a full-book **Production Pipeline** with **multi-provider LLM Vision**, **Batch Automation**, and **2012 Linguistic Modernization**.
 
 ---
 
@@ -122,13 +122,14 @@ The dashboard categories help you resolve issues the engine cannot fix automatic
 | :--- | :--- | :--- |
 | **Harmony Violation** | `⚠️` | A potential spelling error or OCR misread. Manually verify spelling. |
 | **Ambiguous Match** | `❓` | Multiple valid corrections. Use the dropdown to select the correct form. |
-| **Gated Vision Audit** | `⚠️ Warning` | Appears when >5 violations are detected. Trigger a manual **Gemini Visual Audit**. |
+| **Modernized** | `✨` | Text updated to 2012 Standard. Review the transformation in the Session Analysis. |
+| **Gated Vision Audit** | `⚠️ Warning` | Appears when >5 violations are detected. Trigger a manual **LLM Visual Audit**. |
 
 ---
 
-## 📽️ Multimodal Vision Support (3.0-VISION)
+## 📽️ Multimodal Vision Support
 
-ClóScaoil v3.0 introduces a **Vision Auditor** capable of cross-referencing your text with original manuscript scans using Gemini 1.5 Pro.
+ClóScaoil supports **Vision Auditing** via any vision-capable LLM (Gemini, GPT-4o, Claude 3.5 Sonnet) through LiteLLM, cross-referencing your text with original manuscript scans.
 
 ### 🖼️ Automated Image Sourcing
 1.  **Define Workspace:** Set your **Scan Directory** in the sidebar (default: `scans/`).
@@ -140,7 +141,7 @@ ClóScaoil v3.0 introduces a **Vision Auditor** capable of cross-referencing you
 
 ### 🔍 Triggering a Visual Audit
 If the engine detects a **High Error Density** (>5 linguistic violations), it will flag the page.
-1.  **Lab Mode:** Click **"Trigger Gemini Visual Audit"** in the UI.
+1.  **Lab Mode:** Click **"🔍 Trigger LLM Visual Audit"** in the UI.
 2.  **Production Mode:** If **"Vision Audit Policy: Always"** is selected, the audit triggers automatically in the background.
 3.  **API Throttling:** The engine includes a `time.sleep(1)` delay during batch vision audits to ensure API stability and avoid rate limits.
 
