@@ -161,8 +161,9 @@ with tab1:
                 display_text = final_output_text.replace("==", "")
             else:
                 import re
-                display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", final_output_text)
-                display_text = display_text.replace("==", "")
+                # v3.2: Clean ghost markers before valid highlights are rendered
+                display_text = final_output_text.replace("==", "")
+                display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", display_text)
             st.markdown(display_text, unsafe_allow_html=True)
             
             # Anomaly Log (Dashboard within the Lab view)

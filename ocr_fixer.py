@@ -3,6 +3,7 @@ import json
 import os
 import argparse
 import sys
+import time
 
 class OCRFixer:
     VERSION = "3.0-VISION"
@@ -31,10 +32,10 @@ class OCRFixer:
                 all_text.append(content)
         
         full_text = "\n".join(all_text)
+        # Unicode NFC Normalization (Consistency First)
+        full_text = unicodedata.normalize('NFC', full_text)
         # Final de-hyphenation and cleaning
         full_text = self.dehyphenate(full_text)
-        # Unicode NFC Normalization
-        full_text = unicodedata.normalize('NFC', full_text)
         
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d")
         header = (
@@ -398,6 +399,8 @@ class BatchProcessor:
                         img_bytes = img_f.read()
                         processed = self.fixer.vision_auditor.perform_visual_audit(img_bytes, processed)
                         audit_performed = True
+                        # Throttling to avoid API rate limits
+                        time.sleep(1)
             
             with open(out_file, 'w', encoding='utf-8', newline='\n') as f:
                 f.write(processed)
@@ -428,7 +431,11 @@ class BatchProcessor:
         if not directory or not os.path.exists(directory):
             return None
         page_str = str(page_num).zfill(3)
-        possible_names = [f"page_{page_str}.jpg", f"page_{page_str}.png", f"{page_num}.jpg", f"{page_num}.png"]
+        possible_names = [
+            f"page_{page_str}.jpg", f"page_{page_str}.png", 
+            f"{page_num}.jpg", f"{page_num}.png",
+            f"p{page_num}.jpg", f"p{page_num}.png"
+        ]
         for name in possible_names:
             full_path = os.path.join(directory, name)
             if os.path.exists(full_path):
