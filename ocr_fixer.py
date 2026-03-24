@@ -8,7 +8,7 @@ import base64
 import litellm
 
 class OCRFixer:
-    VERSION = "5.0-UNIVERSAL"
+    VERSION = "5.1-ARCHIVAL"
 
     def __init__(self, config_path, api_key=None, model_name="gemini/gemini-1.5-flash"):
         self.config_path = config_path

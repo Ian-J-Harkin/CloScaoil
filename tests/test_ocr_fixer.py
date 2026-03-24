@@ -24,7 +24,7 @@ def fixer():
     return OCRFixer(config_path, model_name="gemini/gemini-1.5-flash")
 
 def test_version(fixer):
-    assert fixer.VERSION == "5.0-UNIVERSAL"
+    assert fixer.VERSION == "5.1-ARCHIVAL"
 
 def test_shorthand_normalization(fixer):
     # Test line boundaries
@@ -196,6 +196,33 @@ def test_highlight_rendering():
     broken_display = engine_output.replace("==", "")
     broken_display = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", broken_display)
     assert "<mark>" not in broken_display  # Confirms the bug existed
+
+def test_modernization_toggle_integrity(fixer):
+    """v5.1: When modernization is OFF, the text must remain in its diplomatic 1943/1958 state."""
+    # Text with old-orthography words that WOULD be modernized
+    old_text = "[l.30]: #\ntráigh agus urdhubhadh"
+    
+    # Process WITHOUT modernization
+    processed_off, patterns_off, _ = fixer.process_text(old_text, modernize_2012=False)
+    
+    # The old forms should survive (not be replaced by trá / urú)
+    assert "tráigh" in processed_off
+    assert "urdhubhadh" in processed_off
+    
+    # No "modernized" entries should exist in the pattern log
+    modernized_entries = [p for p in patterns_off if p.get("type") == "modernized"]
+    assert len(modernized_entries) == 0
+    
+    # Process WITH modernization
+    processed_on, patterns_on, _ = fixer.process_text(old_text, modernize_2012=True)
+    
+    # The old forms SHOULD now be replaced
+    assert "trá" in processed_on
+    assert "urú" in processed_on
+    
+    # Modernized entries should exist
+    modernized_entries_on = [p for p in patterns_on if p.get("type") == "modernized"]
+    assert len(modernized_entries_on) > 0
 
 if __name__ == "__main__":
     pytest.main([__file__])
