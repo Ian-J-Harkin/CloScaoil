@@ -103,9 +103,15 @@ def find_page_image(directory, page_num):
 
 # Logic Execution
 if raw_text and fixer:
-    # Track vision audit state
+    # Track vision audit state & Synchronization (v3.1)
     if "vision_corrected_text" not in st.session_state:
         st.session_state.vision_corrected_text = None
+    if "last_raw_text" not in st.session_state:
+        st.session_state.last_raw_text = None
+        
+    if raw_text != st.session_state.last_raw_text:
+        st.session_state.vision_corrected_text = None
+        st.session_state.last_raw_text = raw_text
     
     # Process text using the engine
     # In Phase C, process_text returns 3 values
@@ -160,8 +166,10 @@ if raw_text and fixer:
             display_text = final_output_text.replace("==", "")
         else:
             import re
-            # Convert ==word== to <mark>word</mark> for all occurrences
+            # Convert ==word== to <mark>word</mark>
             display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", final_output_text)
+            # v3.1 Sanitation: Strip any residual 'Ghost Markers'
+            display_text = display_text.replace("==", "")
             
         st.markdown(display_text, unsafe_allow_html=True)
         
