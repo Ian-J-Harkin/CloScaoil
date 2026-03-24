@@ -67,6 +67,14 @@ with st.sidebar:
     )
     
     st.divider()
+    st.header("📂 Workspace Settings")
+    scan_dir = st.text_input(
+        "Scan Directory (Images)", 
+        value=os.path.join(os.getcwd(), "scans"),
+        help="Local path where page images (page_045.jpg or 45.png) are stored."
+    )
+    
+    st.divider()
     st.header("🔍 Anomaly Dashboard")
     # Placeholder for the dynamic anomaly list
     anomaly_placeholder = st.empty()
@@ -78,28 +86,82 @@ with col1:
     st.subheader("📥 Raw OCR Input")
     raw_text = st.text_area(
         "Paste OCR text for processing...", 
-        height=600, 
+        height=400, 
         placeholder="e.g., [l.30]: #\n7 d'dubairt sé... 'manannán' d'éirig..."
     )
 
+def find_page_image(directory, page_num):
+    if not directory or not os.path.exists(directory):
+        return None
+    page_str = str(page_num).zfill(3)
+    possible_names = [f"page_{page_str}.jpg", f"page_{page_str}.png", f"{page_num}.jpg", f"{page_num}.png"]
+    for name in possible_names:
+        full_path = os.path.join(directory, name)
+        if os.path.exists(full_path):
+            return full_path
+    return None
+
 # Logic Execution
 if raw_text and fixer:
-    # Process text using the engine we just verified
-    processed_text, anomalies = fixer.process_text(
+    # Track vision audit state
+    if "vision_corrected_text" not in st.session_state:
+        st.session_state.vision_corrected_text = None
+    
+    # Process text using the engine
+    # In Phase C, process_text returns 3 values
+    processed_text, anomalies, requires_audit = fixer.process_text(
         raw_text, 
         expand_abbreviations=expand_abbr, 
         strict_mode=strict_mode
     )
     
+    # Image Sourcing Logic
+    page_num = 0
+    m = re.search(r'\[l\.(\d+)\]: #', raw_text)
+    if m: page_num = int(m.group(1))
+    
+    img_path = find_page_image(scan_dir, page_num)
+    image_bytes = None
+    
+    if img_path:
+        st.image(img_path, caption=f"Manual Scan: Page {page_num}", use_container_width=True)
+        with open(img_path, "rb") as f:
+            image_bytes = f.read()
+    else:
+        uploaded_file = st.file_uploader(f"📤 Upload Scan for Page {page_num}", type=["jpg", "png"])
+        if uploaded_file:
+            image_bytes = uploaded_file.getvalue()
+            st.image(image_bytes, caption=f"Uploaded Scan: Page {page_num}", use_container_width=True)
+
+    # Use vision corrected text if available
+    final_output_text = st.session_state.vision_corrected_text or processed_text
+
+    # High Error Density Gating
+    if requires_audit and not st.session_state.vision_corrected_text:
+        st.warning("⚠️ High Error Density detected. Many words fail linguistic validation.")
+        if image_bytes:
+            if st.button("🔍 Trigger Gemini Visual Audit", help="Uses Gemini 1.5 Pro to compare OCR with the original scan."):
+                with st.spinner("Analyzing scan with Gemini 1.5 Pro..."):
+                    corrected = fixer.vision_auditor.perform_visual_audit(image_bytes, processed_text)
+                    st.session_state.vision_corrected_text = corrected
+                    st.rerun()
+        else:
+            st.info("💡 Upload a scan to enable Gemini Visual Audit.")
+
+    if st.session_state.vision_corrected_text:
+        if st.button("🔄 Reset to Heuristic Output"):
+            st.session_state.vision_corrected_text = None
+            st.rerun()
+    
     with col2:
         st.subheader("🚀 ClóScaoil Output")
         
         if not strict_mode:
-            display_text = processed_text.replace("==", "")
+            display_text = final_output_text.replace("==", "")
         else:
             import re
             # Convert ==word== to <mark>word</mark> for all occurrences
-            display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", processed_text)
+            display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", final_output_text)
             
         st.markdown(display_text, unsafe_allow_html=True)
         

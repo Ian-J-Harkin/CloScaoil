@@ -5,12 +5,14 @@ import argparse
 import sys
 
 class OCRFixer:
-    VERSION = "2.0-CLÓSCAOIL"
+    VERSION = "3.0-VISION"
 
     def __init__(self, config_path, api_key=None):
         self.config_path = config_path
         self.data = self.load_config(config_path)
+        self.api_key = api_key
         self.arbitrator = AmbiguityArbitrator(api_key) if api_key else None
+        self.vision_auditor = GeminiVisionAuditor(api_key) if api_key else None
         print(f"INFO: Initializing OCRFixer {self.VERSION}", file=sys.stderr)
     
     def load_config(self, path):
@@ -143,6 +145,8 @@ class OCRFixer:
         ambiguous = dictionary.get("ambiguous", {})
         
         new_patterns = []
+        requires_visual_audit = False
+        harmony_violation_count = 0
         processed_lines = []
         
         for i, line in enumerate(text.split('\n')):
@@ -197,6 +201,7 @@ class OCRFixer:
                     
                     if not self.check_vowel_harmony(processed):
                         new_patterns.append({"word": f"⚠️{processed}", "context": line.strip(), "line": i+1, "type": "harmony_violation"})
+                        harmony_violation_count += 1
                         if strict_mode: processed = f"=={processed}=="
                     
                     new_line_parts.append(processed)
@@ -211,12 +216,16 @@ class OCRFixer:
                 final_output.append("")
             final_output.append(line)
             
-        return "\n".join(final_output), new_patterns
+        if harmony_violation_count > 5:
+            requires_visual_audit = True
+            
+        return "\n".join(final_output), new_patterns, requires_visual_audit
 
 class AmbiguityArbitrator:
     def __init__(self, api_key):
         self.api_key = api_key
-        self.cache_path = os.path.join("config", "resolution_cache.json")
+        # Platform independent path
+        self.cache_path = os.path.join(os.getcwd(), "config", "resolution_cache.json")
         self.cache = self.load_cache()
         self.model = None
         if api_key:
@@ -284,6 +293,43 @@ class AmbiguityArbitrator:
         
         return None
 
+class GeminiVisionAuditor:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.model = None
+        if api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                self.model = genai.GenerativeModel('gemini-1.5-pro')
+            except ImportError:
+                print("WARN: google-generativeai not installed. Vision audit disabled.", file=sys.stderr)
+
+    def perform_visual_audit(self, image_bytes, current_text):
+        if not self.model:
+            return current_text
+        
+        prompt = (
+            "You are an expert paleographer for 1943 Cló Gaelach. "
+            "Compare the provided OCR text against the attached image. "
+            "Specifically look for missing 'ponc' dots (lenition marks) and Tironian et (7/>) symbols. "
+            "Return ONLY the corrected text, maintaining the original line breaks."
+        )
+        
+        try:
+            # Prepare the image parts for Gemini
+            from PIL import Image
+            import io
+            image = Image.open(io.BytesIO(image_bytes))
+            
+            response = self.model.generate_content([prompt, image, current_text])
+            if response.text:
+                return response.text.strip()
+        except Exception as e:
+            print(f"WARN: Vision Audit failed: {e}", file=sys.stderr)
+            
+        return current_text
+
 def main():
     parser = argparse.ArgumentParser(description="OCR Fixer for 1943 Cló Gaelach")
     parser.add_argument("input_file", help="Path to input markdown file")
@@ -295,14 +341,15 @@ def main():
     args = parser.parse_args()
     
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
-    fixer = OCRFixer("config/corrections_dict.json", api_key=api_key)
+    config_path = os.path.join(os.getcwd(), "config", "corrections_dict.json")
+    fixer = OCRFixer(config_path, api_key=api_key)
     if not os.path.exists(args.input_file):
         print(f"ERROR: File not found: {args.input_file}", file=sys.stderr)
         sys.exit(1)
     with open(args.input_file, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    processed_content, new_patterns = fixer.process_text(content, file_path=args.input_file, 
+    processed_content, new_patterns, requires_audit = fixer.process_text(content, file_path=args.input_file, 
                                                        expand_abbreviations=args.expand_abbreviations, 
                                                        strict_mode=args.strict)
     
