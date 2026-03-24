@@ -96,6 +96,16 @@ If the engine detects a **High Error Density** (>5 linguistic violations), it wi
 
 ---
 
+## 🌍 Cross-Platform Compatibility
+
+The ClóScaoil Engine is fully compatible with **Windows, macOS, and Linux**.
+
+- **Dynamic Path Construction:** Hardcoded OS-specific paths have been eliminated. The engine uses dynamic path joining (e.g., `os.path.join(os.getcwd(), ...)`) to automatically conform to the host operating system (`/` vs `\`).
+- **Universal Line Endings:** Text inputted from Windows (`\r\n`) is automatically sanitized to Unix-standard (`\n`) before any regex algorithms process it, eliminating brittle logic bugs.
+- **Strict Encoding:** All file operations explicitly enforce `UTF-8` to prevent platform-specific defaults (like Windows CP-1252) from corrupting the Gaelic characters.
+
+---
+
 ## ⚙️ Configuration & Fine-Tuning
 
 You can improve the engine's accuracy by editing `config/corrections_dict.json` or using the `fine_tune.py` utility.
