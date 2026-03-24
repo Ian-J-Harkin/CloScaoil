@@ -56,8 +56,30 @@ def test_violation_gating(fixer):
 
 def test_path_normalization(fixer):
     # Verify that paths are normalized using os.path.join and getcwd logic
-    # In AmbiguityArbitrator init, we used os.getcwd()
     from ocr_fixer import AmbiguityArbitrator
     arb = AmbiguityArbitrator(api_key=None)
     assert os.path.isabs(arb.cache_path)
     assert "config" in arb.cache_path
+
+def test_visual_heuristics(fixer):
+    # Restores lenited consonants misidentified as noise
+    assert fixer.apply_visual_heuristics("b'") == "ḃ"
+    assert fixer.apply_visual_heuristics("b.") == "ḃ"
+    assert fixer.apply_visual_heuristics("b*") == "ḃ"
+    assert fixer.apply_visual_heuristics("d.") == "ḋ"
+    assert fixer.apply_visual_heuristics("m*") == "ṁ"
+    # Negative test: noise only (no consonant)
+    assert fixer.apply_visual_heuristics("'.") == "'."
+
+def test_dictionary_precedence(fixer):
+    # If word is in verified, don't apply heuristics
+    # 'testword' -> 'verifiedword' in mock data
+    # Normal heuristics would apply to 'testword' if we added characters
+    processed, _, _ = fixer.process_text("testword")
+    assert processed == "verifiedword"
+    
+    # If shorthand is part of verified, it shouldn't be touched by regex
+    # (Actually we split words before verified check, but let's confirm priority)
+    fixer.data["dictionary"]["verified"]["7"] = "SEVEN"
+    processed, _, _ = fixer.process_text("7")
+    assert processed == "SEVEN" # Verified wins over Shorthand regex
