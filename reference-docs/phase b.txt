@@ -1,0 +1,36 @@
+This plan outlines the "Phase B: Infrastructure & Ambiguity Arbitrator" task for the Antigravity agent. This update moves the engine from simply flagging linguistic issues to resolving them automatically using Gemini 1.5.
+
+Antigravity Task: Phase B Infrastructure & Ambiguity Arbitrator
+Role: You are a Full-Stack AI Engineer.
+Objective: Integrate the Gemini API into ocr_fixer.py to automatically resolve ambiguous word choices and update the Streamlit UI to display a resolution log.
+
+1. Dependency & Environment
+Action: Add google-generativeai to the project requirements.
+
+Action: Update OCRFixer.__init__ to accept an optional api_key. The agent should look for this in a local .env file or streamlit secrets.
+
+2. The AmbiguityArbitrator Class (ocr_fixer.py)
+Create a helper class to manage LLM interactions with the following logic:
+
+Prompt Construction: Use a few-shot prompt that provides the surrounding sentence context.
+
+Example Prompt: "In this 1940s Irish sentence, is the word [?] 'ar' (on) or 'ár' (our)? Sentence: [context]. Return only the corrected word.".
+
+Decision Caching: Implement a simple dictionary-based cache (or a local JSON file) to store resolved phrases. If the same ambiguous word appears in the same 3-word context, skip the API call and use the cached result.
+
+3. Automated Flow in process_text
+Action: Modify the ambiguous word logic. Instead of just appending to new_patterns, call the AmbiguityArbitrator.
+
+Action: If a resolution is found, replace the word in new_line_parts and tag the anomaly as type: "auto_fixed".
+
+Action: Ensure the auto_fixed entry includes the original word, the fix, the page, and the line number.
+
+4. UI Resolution Log (streamlit_app.py)
+Action: Add a new section to the Sidebar called "🤖 Automated Resolutions."
+
+Action: Iterate through the anomalies list where type == "auto_fixed" and display them as success toasts or a list.
+
+Display Format: [Line XX]: Fixed 'ar' -> 'ár'.
+
+5. Cost Control Gate
+Constraint: Only trigger an LLM request if the word is found in the dictionary.ambiguous section of corrections_dict.json. Do not call the API for verified words or general text.

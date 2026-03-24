@@ -29,3 +29,41 @@
     - [ ] **Tkinter Fallback:** Implement a `try-except` block for the `tkinter` import to provide a manual path input fallback if a GUI display is missing (common on headless Linux).
     - [ ] **Mac Dependency Docs:** Update instructions for macOS users (e.g., `brew install python-tk`).
     - [ ] **Cross-OS Command Testing:** Verify that `sys.executable` subprocess calls correctly resolve when running in non-Windows virtual environments.
+    
+The identified gaps are technically accurate, but to ensure the Antigravity coding agent (or any AI agent) executes them without "drifting" from your specific linguistic requirements, they should be formatted as a Surgical Patch Request.
+
+Antigravity operates best with a Plan-Act-Reflect structure. Instead of just giving it the feedback, I have restructured it into a "Task" format that explicitly defines the Constraint (what to preserve) and the Action (what to change).
+
+Antigravity Task: Refine Phase A Logic (v2.1)
+Role: You are a Python Developer implementing linguistic heuristics for the CloScaoil engine.
+Objective: Apply three critical refinements to ocr_fixer.py and streamlit_app.py based on the Phase A validation audit.
+
+1. Regex Boundary Fix (ocr_fixer.py)
+Problem: normalize_shorthand fails if the Tironian Et (7 or >) is at the start or end of a line.
+
+Task: Update the regex to use anchors that recognize line starts/ends as valid boundaries.
+
+Action: Replace the existing pattern with:
+pattern = r"(?:^|(?<=\s))[7>](?=(?:\s|$))"
+
+2. Vowel Harmony Annotation (ocr_fixer.py)
+Problem: Risk of future over-correction regarding the letter á.
+
+Task: Add a permanent technical comment to the check_vowel_harmony function for future agent reference.
+
+Action: Insert the following docstring note:
+
+"Linguistic Constraint: The character 'á' is treated as strictly Broad in this version. Do not modify its classification without a Phase B architectural review."
+
+3. UI Cleanup for Non-Strict Mode (streamlit_app.py)
+Problem: Raw ==word== markers are visible even when "Strict Mode" is toggled off.
+
+Task: Implement a cleaning pass that strips markers if highlighting is disabled.
+
+Action: Add logic to the display flow:
+
+Python
+if not strict_mode:
+    display_text = processed_text.replace("==", "")
+else:
+    display_text = processed_text.replace("==", "<mark>", 1).replace("==", "</mark>", 1)

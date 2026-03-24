@@ -2,6 +2,9 @@ import streamlit as st
 import os
 import json
 from ocr_fixer import OCRFixer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Page Configuration - Premium Aesthetics
 st.set_page_config(
@@ -46,7 +49,8 @@ def get_fixer():
     if not os.path.exists(config_path):
         st.error(f"Configuration file not found at {config_path}")
         return None
-    return OCRFixer(config_path)
+    api_key = st.secrets.get("GEMINI_API_KEY") if "GEMINI_API_KEY" in st.secrets else os.environ.get("GEMINI_API_KEY")
+    return OCRFixer(config_path, api_key=api_key)
 
 fixer = get_fixer()
 
@@ -91,9 +95,14 @@ if raw_text and fixer:
     
     with col2:
         st.subheader("🚀 ClóScaoil Output")
-        # Streamlit markdown doesn't always support the ==highlight== syntax natively,
-        # so we convert them to <mark> for the CSS we defined if strict mode is on.
-        display_text = processed_text.replace("==", "<mark>").replace("==", "</mark>") if strict_mode else processed_text
+        
+        if not strict_mode:
+            display_text = processed_text.replace("==", "")
+        else:
+            import re
+            # Convert ==word== to <mark>word</mark> for all occurrences
+            display_text = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", processed_text)
+            
         st.markdown(display_text, unsafe_allow_html=True)
         
     # Populate the Anomaly Sidebar Dashboard
@@ -121,6 +130,14 @@ if raw_text and fixer:
                     m['options'], 
                     key=f"amb_{m['line']}_{m['word']}_{hash(m['context'])}"
                 )
+        
+        # New: 🤖 Automated Resolutions section
+        auto_fixed = [a for a in anomalies if a['type'] == 'auto_fixed']
+        if auto_fixed:
+            st.divider()
+            st.header("🤖 Automated Resolutions")
+            for f in auto_fixed:
+                st.success(f"[Line {f['line']}]: Fixed '{f['word']}' -> '{f['fix']}'.")
 else:
     with col2:
         st.info("Final output will be displayed here in real-time as you paste text.")
