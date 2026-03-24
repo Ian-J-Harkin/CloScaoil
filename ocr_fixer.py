@@ -149,6 +149,70 @@ class OCRFixer:
                 continue
         return False
 
+    def visual_noise_fixer(self, text):
+        """
+        Identifies 'floating specks' (punctuation) that are actually misread dots
+        from Cló Gaelach lenited consonants.
+        """
+        ponc_map = {
+            'b': 'ḃ', 'c': 'ċ', 'd': 'ḋ', 'f': 'ḟ', 
+            'g': 'ġ', 'm': 'ṁ', 'p': 'ṗ', 's': 'ṡ', 't': 'ṫ'
+        }
+        
+        # Noise characters commonly produced by OCR for a detached dot
+        noise_chars = r"['\.\*,\^\~]"
+        
+        def reattach_dot(match):
+            char = match.group(1)
+            mapped = ponc_map.get(char.lower(), char)
+            return mapped if char.islower() else mapped.upper()
+
+        # Regex: A consonant (valid for dot) followed by optional space and a noise character
+        # Excludes end of sentence situations where a real dot might occur naturally. 
+        # Irish words very rarely end in these consonants naturally, but if they do, we check if it's mid-word.
+        pattern = r"([bcdfginpstBCDFGIMPST])\s?(" + noise_chars + r")(?=[a-zA-ZáéíóúÁÉÍÓÚ])"
+        return re.sub(pattern, reattach_dot, text)
+        
+    def normalize_tironian_et(self, text):
+        """Normalizes standalone 7, >, or & to agus."""
+        return re.sub(r'\b[7>&]\b', 'agus', text)
+
+    def vowel_harmony_checker(self, word):
+        """
+        Checks for violations of 'Caol le Caol agus Leathan le Leathan' 
+        (Broad with Broad, Slender with Slender).
+        """
+        # Exclude compound words, very short words, and words with numbers
+        if len(word) < 4 or '-' in word or any(c.isdigit() for c in word):
+            return True
+            
+        broad = set('aouáóú')
+        slender = set('eiéí')
+        vowels = broad | slender
+        
+        # We need to find consonant clusters surrounded by vowels.
+        # If the vowel immediately before the consonant cluster is broad, 
+        # the vowel immediately after the cluster must also be broad.
+        
+        mode = None # 'broad' or 'slender'
+        in_consonants = False
+        
+        for i, char in enumerate(word.lower()):
+            if char in vowels:
+                current_mode = 'broad' if char in broad else 'slender'
+                
+                # If we just exited a consonant cluster and already had a mode established
+                if in_consonants and mode is not None:
+                    if current_mode != mode:
+                        return False # Harmony Violation!
+                
+                mode = current_mode
+                in_consonants = False
+            elif char.isalpha():
+                in_consonants = True
+                
+        return True
+
     def process_text(self, text, file_path=None):
         # Normalize line endings to \n for internal processing
         text = text.replace('\r\n', '\n').replace('\r', '\n')
@@ -161,7 +225,9 @@ class OCRFixer:
         # 1. De-hyphenation
         text = self.dehyphenate(text)
         
-        # 2. Global replacements
+        # 2. Global replacements & Visual Noise
+        text = self.visual_noise_fixer(text)
+        text = self.normalize_tironian_et(text)
         text = self.apply_global_replacements(text)
         
         # 3. Fix stray capitals (using generalized rules)
@@ -211,15 +277,28 @@ class OCRFixer:
                         })
                         new_line_parts.append(part)
                     else:
-                        # Potential new pattern (mixed case, etc.)
-                        if re.search(r'[a-z][A-Z]|[A-Z][a-z][A-Z]|[:]', part):
+                        # Process potential unknown errors (vowel harmony, mixed case, etc.)
+                        word_to_append = part
+                        
+                        harmony_ok = self.vowel_harmony_checker(part)
+                        if not harmony_ok:
+                            new_patterns.append({
+                                "word": f"⚠️{part}",
+                                "context": line.strip(),
+                                "line": i + 1,
+                                "type": "harmony_violation"
+                            })
+                            word_to_append = f"⚠️{part}"
+                            
+                        elif re.search(r'[a-z][A-Z]|[A-Z][a-z][A-Z]|[:]', part):
                              new_patterns.append({
                                 "word": part,
                                 "context": line.strip(),
                                 "line": i + 1,
                                 "type": "potential_new"
                             })
-                        new_line_parts.append(part)
+                             
+                        new_line_parts.append(word_to_append)
                 else:
                     new_line_parts.append(part)
             

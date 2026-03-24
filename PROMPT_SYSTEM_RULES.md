@@ -15,3 +15,6 @@ Implement the following rules in a Python post-processor to correct 1943 Cló Ga
    - Retain page numbers and headers.
    - Blank line before page markers `[l.XX]: #`.
    - Blank line after marker ONLY for new paragraphs.
+
+### Agentic Morphological Review
+1. If a word generated in the pipeline contains a ⚠️ prefix (e.g., `⚠️fílan`), use the Vowel Harmony ruleset (Caol le Caol / Leathan le Leathan) to suggest the most likely morphological correction based on the surrounding sentence context.
