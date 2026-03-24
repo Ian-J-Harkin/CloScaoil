@@ -499,10 +499,14 @@ class BatchProcessor:
             f"{page_str}.jpg", f"{page_str}.png",
             f"p{page_num}.jpg", f"p{page_num}.png"
         ]
+        # v3.4: Case-insensitive matching for scanner output (.JPG, .PNG)
+        try:
+            dir_contents = {f.lower(): f for f in os.listdir(directory)}
+        except OSError:
+            return None
         for name in possible_names:
-            full_path = os.path.join(directory, name)
-            if os.path.exists(full_path):
-                return full_path
+            if name.lower() in dir_contents:
+                return os.path.join(directory, dir_contents[name.lower()])
         return None
 
 class EpubBuilder:
@@ -535,6 +539,7 @@ h1, h2, h3 { text-align: center; }
         book.add_item(nav_css)
 
         chapters = []
+        toc_entries = []
         files = sorted([f for f in os.listdir(input_dir) if f.endswith('.md')])
         
         for idx, filename in enumerate(files):
@@ -546,17 +551,29 @@ h1, h2, h3 { text-align: center; }
             content = re.sub(r'\[l\.\d+\]: #\s*', '', content)
             content = unicodedata.normalize('NFC', content)
             
+            # v3.4: Parse Markdown headers for granular ToC
+            headers = re.findall(r'^(#{1,3})\s+(.+)$', content, re.MULTILINE)
+            chapter_title = headers[0][1].strip() if headers else f"Caibidil {idx+1}"
+            
             # Convert to HTML
             html_content = markdown.markdown(content)
             
             # Create chapter
-            c = epub.EpubHtml(title=f"Caibidil {idx+1}", file_name=f"chap_{idx+1}.xhtml", lang="ga")
-            c.content = f"<h1>Caibidil {idx+1}</h1>\n{html_content}"
+            c = epub.EpubHtml(title=chapter_title, file_name=f"chap_{idx+1}.xhtml", lang="ga")
+            c.content = html_content
             c.add_item(nav_css)
             book.add_item(c)
             chapters.append(c)
 
-        book.toc = tuple(chapters)
+            # Build nested ToC: sub-headers become Section children
+            sub_headers = [(h, t.strip()) for h, t in headers[1:] if len(h) >= 2]
+            if sub_headers:
+                sub_sections = [epub.Section(title) for _, title in sub_headers]
+                toc_entries.append((c, sub_sections))
+            else:
+                toc_entries.append(c)
+
+        book.toc = toc_entries
         book.add_item(epub.EpubNcx())
         book.add_item(epub.EpubNav())
 

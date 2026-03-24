@@ -1,11 +1,12 @@
 import pytest
 import os
 import json
-from ocr_fixer import StandardModernizer
+from ocr_fixer import StandardModernizer, UniversalLLMManager
 
 @pytest.fixture
 def modernizer():
-    return StandardModernizer(api_key=None, model_name="gemini/gemini-1.5-flash")
+    mgr = UniversalLLMManager(api_key=None, model_name="gemini/gemini-1.5-flash")
+    return StandardModernizer(mgr)
 
 def test_lexical_modernization(modernizer):
     # Test spelling simplifications from caighdean_2012.json

@@ -57,7 +57,7 @@ For high-scale processing of the entire manuscript:
 2.  **Directories:** Define your **Input Directory** (folder of `.md` chapters) and **Output Directory**.
 3.  **Policy:** Choose a **Vision Audit Policy**:
     *   `manual`: The engine stops if noise is detected.
-    *   `always`: Automated **Silent Mode** triggers Gemini Vision for any high-noise page.
+    *   `always`: Automated **Silent Mode** triggers the LLM Vision model for any high-noise page. **Note:** This policy requires an active API key for your selected LLM provider. If the key is missing, silent audits will be skipped.
 4.  **Run:** Click **"Start Batch Run"** to process all files sequentially.
 5.  **Finalize:** Once the batch completes, use the **"✨ Generate Golden Copy"** button to consolidate the full manuscript into a single edition.
 
@@ -132,7 +132,7 @@ ClóScaoil v3.0 introduces a **Vision Auditor** capable of cross-referencing you
 
 ### 🖼️ Automated Image Sourcing
 1.  **Define Workspace:** Set your **Scan Directory** in the sidebar (default: `scans/`).
-2.  **Supported Formats:** The engine automatically searches for several naming conventions:
+2.  **Supported Formats:** The engine automatically searches for several naming conventions (case-insensitive, so `.JPG` and `.jpg` are both matched):
     *   `page_045.jpg / .png`
     *   `045.jpg / .png`
     *   `p45.jpg / .png` (Expanded in v3.2)
@@ -168,3 +168,10 @@ You can improve the engine's accuracy by editing `config/corrections_dict.json` 
 ---
 
 *For detailed technical implementation notes, refer to [ocr_fixer.py](file:///c:/Github/CloScaoil/ocr_fixer.py) or our [WAYPOINT.md](file:///c:/Github/CloScaoil/WAYPOINT.md) progress log.*
+
+---
+
+## 📖 EPUB Rendering Notes
+
+- **Gadelica Font:** The EPUB CSS references the "Gadelica" serif font for authentic Gaelic Type rendering. For **older Kindle devices** or e-readers without built-in Irish font support, you may need to sideload the Gadelica `.ttf` font file to the device. Modern e-readers (Kobo, Apple Books) typically fall back gracefully to their default serif font.
+- **Table of Contents:** The EPUB builder (v3.4) now parses Markdown `#` and `##` headers within each file to generate nested Table of Contents entries, ensuring proper e-reader navigation.

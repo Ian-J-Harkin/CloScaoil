@@ -56,10 +56,10 @@ def test_violation_gating(fixer):
 
 def test_path_normalization(fixer):
     # Verify that paths are normalized using os.path.join and getcwd logic
-    from ocr_fixer import AmbiguityArbitrator
-    arb = AmbiguityArbitrator(api_key=None, model_name="gemini/gemini-1.5-flash")
-    assert os.path.isabs(arb.cache_path)
-    assert "config" in arb.cache_path
+    from ocr_fixer import UniversalLLMManager
+    mgr = UniversalLLMManager(api_key=None, model_name="gemini/gemini-1.5-flash")
+    assert os.path.isabs(mgr.cache_path)
+    assert "config" in mgr.cache_path
 
 def test_visual_heuristics(fixer):
     # Restores lenited consonants misidentified as noise
@@ -134,5 +134,69 @@ def test_golden_copy_logic(fixer):
     finally:
         shutil.rmtree(tmp_in)
 
+def test_image_case_insensitive(fixer):
+    """v3.4: Scanner output may use .JPG or .PNG uppercase extensions."""
+    from ocr_fixer import BatchProcessor
+    bp = BatchProcessor(fixer)
+    
+    import tempfile
+    import shutil
+    tmp_dir = tempfile.mkdtemp()
+    try:
+        open(os.path.join(tmp_dir, "page_045.JPG"), 'w').close()
+        open(os.path.join(tmp_dir, "046.PNG"), 'w').close()
+        
+        result_45 = bp._find_image(tmp_dir, 45)
+        assert result_45 is not None
+        assert "page_045.JPG" in result_45
+        
+        result_46 = bp._find_image(tmp_dir, 46)
+        assert result_46 is not None
+        assert "046.PNG" in result_46
+    finally:
+        shutil.rmtree(tmp_dir)
+
+def test_golden_copy_newline_consistency(fixer):
+    """v3.4: Golden copy must enforce Unix-standard newlines regardless of host OS."""
+    import tempfile
+    import shutil
+    tmp_in = tempfile.mkdtemp()
+    tmp_out_file = os.path.join(tmp_in, "golden.txt")
+    
+    try:
+        with open(os.path.join(tmp_in, "ch1.md"), 'w', encoding='utf-8') as f:
+            f.write("[l.1]: #\nLine one.\n[l.2]: #\nLine two.")
+            
+        fixer.generate_golden_copy(tmp_in, tmp_out_file)
+        
+        with open(tmp_out_file, 'rb') as f:
+            raw_bytes = f.read()
+            # Must NOT contain Windows CRLF
+            assert b'\r\n' not in raw_bytes
+            # Must contain Unix LF
+            assert b'\n' in raw_bytes
+    finally:
+        shutil.rmtree(tmp_in)
+
+def test_highlight_rendering():
+    """v3.4: ==word== must be converted to <mark> tags BEFORE orphaned == are stripped."""
+    import re
+    
+    # Simulate strict mode output from the engine
+    engine_output = "This is ==badword== in a sentence."
+    
+    # Correct order: regex first, strip second
+    display = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", engine_output)
+    display = display.replace("==", "")
+    
+    assert "<mark>badword</mark>" in display
+    assert "==" not in display
+    
+    # Verify the OLD (broken) order would fail
+    broken_display = engine_output.replace("==", "")
+    broken_display = re.sub(r"==([^=]+)==", r"<mark>\1</mark>", broken_display)
+    assert "<mark>" not in broken_display  # Confirms the bug existed
+
 if __name__ == "__main__":
     pytest.main([__file__])
+
