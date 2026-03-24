@@ -4,16 +4,20 @@ import os
 import argparse
 import sys
 import time
+import base64
+import litellm
 
 class OCRFixer:
-    VERSION = "3.0-VISION"
+    VERSION = "5.0-UNIVERSAL"
 
-    def __init__(self, config_path, api_key=None):
+    def __init__(self, config_path, api_key=None, model_name="gemini/gemini-1.5-flash"):
         self.config_path = config_path
         self.data = self.load_config(config_path)
         self.api_key = api_key
-        self.arbitrator = AmbiguityArbitrator(api_key) if api_key else None
-        self.vision_auditor = GeminiVisionAuditor(api_key) if api_key else None
+        self.model_name = model_name
+        self.arbitrator = AmbiguityArbitrator(api_key, model_name)
+        self.vision_auditor = UniversalVisionAuditor(api_key, model_name)
+        self.modernizer = StandardModernizer(api_key, model_name)
         print(f"INFO: Initializing OCRFixer {self.VERSION}", file=sys.stderr)
 
     def generate_golden_copy(self, input_dir, output_file):
@@ -165,7 +169,7 @@ class OCRFixer:
         pattern_violation = rf"([{broad}][^aeiouáéíóú]+[{slender}])|([{slender}][^aeiouáéíóú]+[{broad}])"
         return not re.search(pattern_violation, word, re.IGNORECASE)
 
-    def process_text(self, text, file_path=None, expand_abbreviations=False, strict_mode=False, page_start=None):
+    def process_text(self, text, file_path=None, expand_abbreviations=False, strict_mode=False, page_start=None, modernize_2012=False):
         text = text.replace('\r\n', '\n').replace('\r', '\n')
         page_counter = page_start if page_start is not None else (int(self.find_last_page_number(file_path)) if file_path else 0)
         text = self.dehyphenate(text)
@@ -248,25 +252,39 @@ class OCRFixer:
                 final_output.append("")
             final_output.append(line)
             
+        if modernize_2012 and self.modernizer:
+            final_output_modernized = []
+            for i, line in enumerate(final_output):
+                if line.strip() and not re.match(r'^\[l\.\d+\]: #', line.strip()):
+                    orig_line = line
+                    m_line = self.modernizer.apply_lexical(line)
+                    m_line = self.modernizer.modernize_line(m_line)
+                    if m_line != orig_line:
+                        new_patterns.append({
+                            "word": orig_line,
+                            "fix": m_line,
+                            "context": m_line.strip(),
+                            "page": page_counter,
+                            "line": i+1,
+                            "type": "modernized"
+                        })
+                    final_output_modernized.append(m_line)
+                else:
+                    final_output_modernized.append(line)
+            final_output = final_output_modernized
+
         if harmony_violation_count > 5:
             requires_visual_audit = True
             
         return "\n".join(final_output), new_patterns, requires_visual_audit
 
 class AmbiguityArbitrator:
-    def __init__(self, api_key):
+    def __init__(self, api_key, model_name):
         self.api_key = api_key
         # Platform independent path
         self.cache_path = os.path.join(os.getcwd(), "config", "resolution_cache.json")
         self.cache = self.load_cache()
-        self.model = None
-        if api_key:
-            try:
-                import google.generativeai as genai
-                genai.configure(api_key=api_key)
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
-            except ImportError:
-                print("WARN: google-generativeai not installed. LLM arbitration disabled.", file=sys.stderr)
+        self.model = model_name
 
     def load_cache(self):
         if os.path.exists(self.cache_path):
@@ -310,8 +328,15 @@ class AmbiguityArbitrator:
         )
         
         try:
-            response = self.model.generate_content(prompt)
-            result = response.text.strip()
+            kwargs = {}
+            if self.api_key:
+                kwargs["api_key"] = self.api_key
+            response = litellm.completion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                **kwargs
+            )
+            result = response.choices[0].message.content.strip()
             # Clean up potential markdown or extra text
             result = re.sub(r'[^a-záéíóúḃċḋḟġṁṗṡṫÁÉÍÓÚḂĊḊḞĠṀṖṠṪ]', '', result)
             
@@ -325,17 +350,10 @@ class AmbiguityArbitrator:
         
         return None
 
-class GeminiVisionAuditor:
-    def __init__(self, api_key):
+class UniversalVisionAuditor:
+    def __init__(self, api_key, model_name):
         self.api_key = api_key
-        self.model = None
-        if api_key:
-            try:
-                import google.generativeai as genai
-                genai.configure(api_key=api_key)
-                self.model = genai.GenerativeModel('gemini-1.5-pro')
-            except ImportError:
-                print("WARN: google-generativeai not installed. Vision audit disabled.", file=sys.stderr)
+        self.model = model_name
 
     def perform_visual_audit(self, image_bytes, current_text):
         if not self.model:
@@ -349,18 +367,76 @@ class GeminiVisionAuditor:
         )
         
         try:
-            # Prepare the image parts for Gemini
-            from PIL import Image
-            import io
-            image = Image.open(io.BytesIO(image_bytes))
-            
-            response = self.model.generate_content([prompt, image, current_text])
-            if response.text:
-                return response.text.strip()
+            base64_img = base64.b64encode(image_bytes).decode('utf-8')
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt + "\nCurrent text: " + current_text},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
+                    ]
+                }
+            ]
+            kwargs = {}
+            if self.api_key:
+                kwargs["api_key"] = self.api_key
+            response = litellm.completion(model=self.model, messages=messages, **kwargs)
+            if response.choices[0].message.content:
+                return response.choices[0].message.content.strip()
         except Exception as e:
             print(f"WARN: Vision Audit failed: {e}", file=sys.stderr)
             
         return current_text
+
+class StandardModernizer:
+    def __init__(self, api_key, model_name):
+        self.config_path = os.path.join(os.getcwd(), "config", "caighdean_2012.json")
+        self.data = self._load_map()
+        self.api_key = api_key
+        self.model = model_name
+
+    def _load_map(self):
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {"exact_matches": {}, "suffix_replacements": {}}
+
+    def apply_lexical(self, text):
+        import unicodedata
+        # Exact Matches
+        for old, new in self.data.get("exact_matches", {}).items():
+            text = re.sub(r'\b' + re.escape(old) + r'\b', new, text, flags=re.IGNORECASE)
+        # Suffix Matches
+        for old_suf, new_suf in self.data.get("suffix_replacements", {}).items():
+            text = re.sub(re.escape(old_suf) + r'(?=\W|$)', new_suf, text, flags=re.IGNORECASE)
+        # NFC normalisation
+        return unicodedata.normalize('NFC', text)
+
+    def modernize_line(self, line):
+        # Regex-based "Nominative-for-Genitive" detector
+        if re.search(r'\b(?:ag|do)\s+\w+\s+\w+', line, re.IGNORECASE):
+            if self.model:
+                prompt = (
+                    "You are an editor for Rannóg an Aistriúcháin. Update the following 1958 Irish text "
+                    "to An Caighdeán Oifigiúil Athbhreithnithe (2012) standards. Focus on Nominative-for-Genitive substitutions "
+                    "(e.g., 'ag glanadh fuinneoige' -> 'ag glanadh fuinneog') and replace synthetic verb forms (mholamar) "
+                    "with analytic forms (mhol muid).\n"
+                    "Return ONLY the updated text. Original text:\n" + line
+                )
+                try:
+                    kwargs = {}
+                    if self.api_key:
+                        kwargs["api_key"] = self.api_key
+                    res = litellm.completion(
+                        model=self.model,
+                        messages=[{"role": "user", "content": prompt}],
+                        **kwargs
+                    )
+                    if res.choices[0].message.content:
+                        line = res.choices[0].message.content.strip()
+                except Exception as e:
+                    print(f"WARN: StandardModernizer LLM failed: {e}", file=sys.stderr)
+        return line
 
 class BatchProcessor:
     def __init__(self, fixer):

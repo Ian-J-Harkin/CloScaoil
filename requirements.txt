@@ -1,5 +1,5 @@
 streamlit
-google-generativeai
+litellm
 argparse
 Pillow
 pytest

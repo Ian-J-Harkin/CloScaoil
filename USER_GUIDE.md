@@ -7,15 +7,24 @@ Welcome to the **ClóScaoil Engine**, the surgical OCR correction system designe
 
 ## 🚀 Getting Started
 
-### 🔑 API Configuration
-To enable the **Ambiguity Arbitrator** (Automated Choice Resolution), you must provide a Google Gemini API Key.
+### 🔑 Setting up API Keys
+To enable the **LLM Providers** (Automated Choice Resolution, Vision, Modernization), you must provide the respective API Keys (e.g. `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`). The engine looks directly at your Operating System's environment variables.
 
-1.  **Set Environment Variable:** The engine prioritizes your operating system’s environment variables.
-    *   **Windows:** `setx GEMINI_API_KEY "your_key_here"`
-    *   **macOS/Linux:** `export GEMINI_API_KEY="your_key_here"`
-2.  **Streamlit Secrets (Optional):** If deploying to Streamlit Cloud, add `GEMINI_API_KEY` to your app's secrets dashboard.
-
-4.  **Export:** Copy the corrected text from the **"🚀 Output Preview"** panel.
+1. **Windows:**
+   - Open Start Menu and search for "Environment Variables".
+   - Click "Edit the system environment variables".
+   - Click the "Environment Variables..." button.
+   - Under "User variables", click "New...".
+   - Variable name: `ANTHROPIC_API_KEY` (or whichever provider you are using).
+   - Variable value: `your_key_here`. 
+   - Click OK and **restart your terminal/IDE**.
+2. **macOS / Linux:**
+   - Open your terminal.
+   - Edit your shell profile (e.g., `nano ~/.bashrc` or `nano ~/.zshrc`).
+   - Add the line: `export ANTHROPIC_API_KEY="your_key_here"`
+   - Save and reload your profile (`source ~/.zshrc`).
+3. **Streamlit Cloud (Optional):**  
+   If deploying to Streamlit Cloud, add the keys directly to your app's "Secrets" dashboard.
 
 ### 📦 Option 2: Full-Book Batch Production
 For high-scale processing of the entire manuscript:

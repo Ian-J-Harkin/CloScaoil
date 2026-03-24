@@ -1,7 +1,9 @@
 import streamlit as st
 import os
 import json
+import re
 from ocr_fixer import OCRFixer
+
 # Page Configuration - Premium Aesthetics
 st.set_page_config(
     page_title="ClóScaoil Engine v2.0",
@@ -39,18 +41,13 @@ st.title("🛡️ ClóScaoil Engine (v3.1-PRODUCTION)")
 st.caption("Manannán Digitization Lab | Surgical OCR Correction & Heuristic Intelligence")
 
 # Initialize Engine
-@st.cache_resource
-def get_fixer():
+@st.cache_resource(hash_funcs={"_thread.RLock": lambda _: None}, experimental_allow_widgets=True)
+def get_fixer(api_key=None, model_name="gemini/gemini-1.5-flash"):
     config_path = os.path.join(os.getcwd(), "config", "corrections_dict.json")
     if not os.path.exists(config_path):
         st.error(f"Configuration file not found at {config_path}")
         return None
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key and "GEMINI_API_KEY" in st.secrets:
-        api_key = st.secrets["GEMINI_API_KEY"]
-    return OCRFixer(config_path, api_key=api_key)
-
-fixer = get_fixer()
+    return OCRFixer(config_path, api_key=api_key, model_name=model_name)
 
 # Sidebar Configuration
 with st.sidebar:
@@ -65,7 +62,32 @@ with st.sidebar:
         value=True, 
         help="Highlight words that violate Vowel Harmony patterns (e.g., broad vowel matched with slender vowel)."
     )
+    modernize_2012 = st.toggle(
+        "✨ 2012 Standard Modernization", 
+        value=False, 
+        help="Update 1950s orthography to An Caighdeán Oifigiúil Athbhreithnithe (2012)."
+    )
     
+    st.divider()
+    st.header("🌐 LLM Provider Settings")
+    provider = st.selectbox("Provider", ["gemini", "openai", "anthropic", "openrouter"])
+    model_input = st.text_input("Specific Model Name", value="gemini-1.5-flash")
+    
+    provider_model = f"{provider}/{model_input}"
+    
+    # Check for correct API key
+    key_env = f"{provider.upper()}_API_KEY"
+    api_key = os.environ.get(key_env)
+    
+    if not api_key and "GEMINI_API_KEY" in st.secrets and provider == "gemini":
+        api_key = st.secrets["GEMINI_API_KEY"]
+
+    if not api_key:
+        provider_name = "Claude" if provider == "anthropic" else provider.title()
+        st.warning(f"⚠️ {key_env} not found in System Environment. Please set this variable to use {provider_name}.")
+        
+    fixer = get_fixer(api_key=api_key, model_name=provider_model)
+
     st.divider()
     st.header("📂 Workspace Settings")
     scan_dir = st.text_input(
@@ -105,7 +127,8 @@ with tab1:
         processed_text, anomalies, requires_audit = fixer.process_text(
             raw_text, 
             expand_abbreviations=expand_abbr, 
-            strict_mode=strict_mode
+            strict_mode=strict_mode,
+            modernize_2012=modernize_2012
         )
         
         # Image Sourcing Logic
@@ -175,6 +198,8 @@ with tab1:
                         st.info(f"**Auto-Fixed:** {a['word']} ➔ {a['fix']}")
                     elif a['type'] == 'harmony_violation':
                         st.error(f"**Harmony Violation:** {a['word']}")
+                    elif a['type'] == 'modernized':
+                        st.success(f"**2012 Standard:** {a['word']} ➔ {a['fix']}")
     else:
         with col2:
             st.info("Awaiting input to generate linguistic analysis.")

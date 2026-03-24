@@ -1,0 +1,144 @@
+To make the Ambiguity Arbitrator and Vision Auditor cross-platform and compatible with multiple LLM providers (OpenAI, Claude, and OpenRouter), you should transition from the specific google-generativeai SDK to a unified wrapper approach.The most efficient way to achieve this without rewriting your core logic for every provider is to use LiteLLM, a lightweight library that standardizes calls to over 100+ model providers using the OpenAI API schema.1. Updated DependenciesFirst, update your requirements.txt to include the universal wrapper:Plaintextlitellm
+python-dotenv
+Pillow
+2. Unified Arbitrator ArchitectureThe new AmbiguityArbitrator will use a single completion method. This allows you to switch between openai/gpt-4o, anthropic/claude-3.5-sonnet, or any model on OpenRouter just by changing a configuration string.Pythonimport litellm
+import os
+
+class AmbiguityArbitrator:
+    def __init__(self, api_key=None, provider="gemini", model_name="gemini-1.5-flash"):
+        # LiteLLM reads keys from environment variables automatically
+        # e.g., OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY
+        self.model = f"{provider}/{model_name}" if provider != "openai" else model_name
+        
+    def resolve(self, word, options, context_sentence):
+        prompt = f"In this 1940s Irish sentence, is [?] '{word}' or one of {options}? Context: {context_sentence}"
+        
+        try:
+            # LiteLLM standardizes the call for all providers
+            response = litellm.completion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"LLM Error: {e}")
+            return None
+3. Cross-Platform ConfigurationTo ensure this works on Windows, macOS, and Linux without hardcoded paths, use a .env file to manage your multi-provider keys.Create a .env file in your root directory:Bash# Provider Keys
+GEMINI_API_KEY=your_gemini_key
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_claude_key
+OPENROUTER_API_KEY=your_openrouter_key
+
+# Default Model Selection
+DEFAULT_PROVIDER=anthropic
+DEFAULT_MODEL=claude-3-5-sonnet-20240620
+4. OpenRouter IntegrationOpenRouter is particularly useful for Phase B because it provides a unified endpoint for almost any model (including free ones for testing). To use it, simply format the model name as openrouter/provider/model.Example usage for OpenRouter:Python# In your app logic
+fixer = OCRFixer(provider="openrouter", model_name="anthropic/claude-3.5-sonnet")
+5. Multi-Provider Vision AuditorVision requirements differ slightly by provider (e.g., Claude uses a specific base64 format while Gemini uses raw bytes). LiteLLM handles these transformations internally.Pythondef perform_visual_audit(self, image_bytes, current_text):
+    import base64
+    base64_image = base64.b64encode(image_bytes).decode('utf-8')
+    
+    # Standardized multimodal message format
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Correct this text based on the image."},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+            ]
+        }
+    ]
+    
+    response = litellm.completion(model=self.model, messages=messages)
+    return response.choices[0].message.content
+Implementation Summary for AntigravityFeatureChange RequiredProvider SupportReplace google.generativeai with litellm.Key ManagementUse python-dotenv for cross-platform .env support.Model SwitchingUse the provider/model string format in st.sidebar.Rate LimitingLiteLLM includes built-in max_retries to prevent batch crashes.Would you like me to draft the Modular LLM Wrapper task for Antigravity so he can swap out the Gemini-only code for this universal version?
+
+To make the LLM section of the CloScaoil engine cross-platform and compatible with multiple providers (Gemini, OpenAI, Claude, and OpenRouter), we will move from the specific Google SDK to a Unified LLM Wrapper architecture. This approach uses LiteLLM, which standardizes the input and output formats across all major providers.
+
+Phase F: Multi-Provider & Cross-Platform Integration
+1. Architectural Strategy: The Unified Wrapper
+We will replace the provider-specific classes with a single, robust UniversalArbitrator and UniversalVisionAuditor. This allows you to switch models by simply changing a string (e.g., from gemini/gemini-1.5-pro to anthropic/claude-3-5-sonnet) without touching the core logic.
+
+2. Implementation Plan
+A. Dependency Update (requirements.txt)
+Action: Replace google-generativeai with litellm and python-dotenv.
+
+Rationale: litellm handles the API translations; python-dotenv ensures API keys are loaded securely across Windows, macOS, and Linux.
+
+B. Unified Arbitrator (ocr_fixer.py)
+The new class will use environment variables to find the correct key for the requested provider.
+
+Python
+import litellm
+from dotenv import load_dotenv
+import os
+
+load_dotenv() # Load keys from .env file for cross-platform support
+
+class UniversalArbitrator:
+    def __init__(self, provider_model="gemini/gemini-1.5-flash"):
+        self.model = provider_model
+        
+    def resolve(self, word, options, context_sentence):
+        prompt = f"Expert in 1940s Irish. Context: {context_sentence}. Is [?] '{word}' or {options}?"
+        try:
+            # LiteLLM handles OpenAI, Claude, and OpenRouter with this same call
+            response = litellm.completion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"LLM Error: {e}")
+            return None
+C. Universal Vision Auditor (ocr_fixer.py)
+LiteLLM standardizes multimodal (Image + Text) prompts, making the "Gemini Sandwich" work with GPT-4o or Claude 3.5 Sonnet.
+
+Python
+def perform_visual_audit(self, image_bytes, current_text):
+    import base64
+    base_64_image = base64.b64encode(image_bytes).decode('utf-8')
+    
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Correct this 1943 Cló Gaelach OCR text based on the image."},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base_64_image}"}}
+            ]
+        }
+    ]
+    response = litellm.completion(model=self.model, messages=messages)
+    return response.choices[0].message.content
+3. Technical Specification for Antigravity
+Copy-paste this to the agent to implement the cross-platform multi-LLM update:
+
+Antigravity Task: Phase F — Universal LLM Integration (v5.0)
+
+Role: Senior Backend Engineer.
+Objective: Transition the engine to a multi-provider LLM architecture supporting Gemini, OpenAI, Claude, and OpenRouter.
+
+Dependencies (requirements.txt): >     - Replace google-generativeai with litellm.
+
+Add python-dotenv.
+
+Environment Management: >     - Implement load_dotenv() at the top of ocr_fixer.py.
+
+Ensure the engine looks for OPENAI_API_KEY, ANTHROPIC_API_KEY, etc., in a .env file.
+
+Unified Classes (ocr_fixer.py):
+
+Refactor AmbiguityArbitrator and GeminiVisionAuditor into a single UniversalLLMManager using litellm.completion.
+
+Support a model_string parameter (e.g., openrouter/anthropic/claude-3.5-sonnet).
+
+UI Model Selector (streamlit_app.py):
+
+Add a dropdown in the Sidebar to select the Provider (Gemini, OpenAI, Claude, OpenRouter) and Model Name.
+
+Update all calls to pass the selected model string to the engine.
+
+Path Normalization: Ensure all file operations in the new modules use os.path.join to remain cross-platform.
+
+Architect's Note: This update removes the "Gemini-only" lock-in, allowing you to use the best available model for Irish grammar at any given time while keeping the system stable on Windows, Mac, or Linux.
+

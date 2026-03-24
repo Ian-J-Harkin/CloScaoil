@@ -1,0 +1,16 @@
+{
+  "suffix_replacements": {
+    "ughadh": "ú",
+    "idhe": "í",
+    "idhibh": "í",
+    "imíd": "imid",
+    "fadh muid": "fadh muid"
+  },
+  "exact_matches": {
+    "tráigh": "trá",
+    "urdhubhadh": "urú",
+    "beirbhiughadh": "beiriú",
+    "cluaidhe": "cluaí",
+    "cruadh-": "crua-"
+  }
+}
