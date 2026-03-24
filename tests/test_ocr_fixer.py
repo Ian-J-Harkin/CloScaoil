@@ -77,9 +77,59 @@ def test_dictionary_precedence(fixer):
     # Normal heuristics would apply to 'testword' if we added characters
     processed, _, _ = fixer.process_text("testword")
     assert processed == "verifiedword"
-    
     # If shorthand is part of verified, it shouldn't be touched by regex
-    # (Actually we split words before verified check, but let's confirm priority)
     fixer.data["dictionary"]["verified"]["7"] = "SEVEN"
     processed, _, _ = fixer.process_text("7")
-    assert processed == "SEVEN" # Verified wins over Shorthand regex
+    assert processed == "SEVEN" 
+
+def test_image_fallback_naming(fixer):
+    from ocr_fixer import BatchProcessor
+    bp = BatchProcessor(fixer)
+    
+    # Create temp directory with various naming conventions
+    import tempfile
+    import shutil
+    tmp_dir = tempfile.mkdtemp()
+    try:
+        # Create dummy images
+        open(os.path.join(tmp_dir, "page_045.jpg"), 'w').close()
+        open(os.path.join(tmp_dir, "046.png"), 'w').close()
+        open(os.path.join(tmp_dir, "p47.jpg"), 'w').close()
+        
+        assert bp._find_image(tmp_dir, 45) is not None
+        assert "page_045.jpg" in bp._find_image(tmp_dir, 45)
+        
+        assert bp._find_image(tmp_dir, 46) is not None
+        assert "046.png" in bp._find_image(tmp_dir, 46)
+        
+        assert bp._find_image(tmp_dir, 47) is not None
+        assert "p47.jpg" in bp._find_image(tmp_dir, 47)
+        
+        # Negative test
+        assert bp._find_image(tmp_dir, 99) is None
+    finally:
+        shutil.rmtree(tmp_dir)
+
+def test_golden_copy_logic(fixer):
+    import tempfile
+    import shutil
+    tmp_in = tempfile.mkdtemp()
+    tmp_out_file = os.path.join(tmp_in, "golden.txt")
+    
+    try:
+        # Create mock chapters with page markers
+        with open(os.path.join(tmp_in, "ch1.md"), 'w', encoding='utf-8') as f:
+            f.write("[l.1]: #\nFirst page content.\n[l.2]: #\nSecond page.")
+            
+        fixer.generate_golden_copy(tmp_in, tmp_out_file)
+        
+        with open(tmp_out_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Headers should be gone
+            assert "[l.1]: #" not in content
+            assert "[l.2]: #" not in content
+            assert "First page content." in content
+            assert "Second page." in content
+            assert "PROCESSED BY CLÓSCAOIL" in content
+    finally:
+        shutil.rmtree(tmp_in)

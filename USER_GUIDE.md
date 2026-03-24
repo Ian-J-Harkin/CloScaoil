@@ -1,7 +1,7 @@
-# 🛡️ ClóScaoil Engine (v2.0) User Guide
-**Manannán Digitization Lab | Phase B: Ambiguity Arbitration**
+# 🛡️ ClóScaoil Engine (v3.3-STABLE) User Guide
+**Manannán Digitization Lab | Phase D: Production Hardening**
 
-Welcome to the **ClóScaoil Engine**, the surgical OCR correction system designed specifically for the 1943 Cló Gaelach (Gaelic Type) digitization of the *Manannán* series. This engine transitions the project from simple "Search & Replace" to **Heuristic Intelligence** and **LLM Arbitration** while maintaining linguistic integrity.
+Welcome to the **ClóScaoil Engine**, the surgical OCR correction system designed specifically for the 1943 Cló Gaelach (Gaelic Type) digitization of the *Manannán* series. This engine transitions from a single-page "Laboratory" to a full-book **Production Pipeline** with **LLM Vision** and **Batch Automation**.
 
 ---
 
@@ -15,17 +15,17 @@ To enable the **Ambiguity Arbitrator** (Automated Choice Resolution), you must p
     *   **macOS/Linux:** `export GEMINI_API_KEY="your_key_here"`
 2.  **Streamlit Secrets (Optional):** If deploying to Streamlit Cloud, add `GEMINI_API_KEY` to your app's secrets dashboard.
 
-### 🖥️ Option 1: Live Interactive UI (Streamlit)
-For immediate correction and real-time linguistic validation, launch the Streamlit dashboard:
+4.  **Export:** Copy the corrected text from the **"🚀 Output Preview"** panel.
 
-```bash
-streamlit run streamlit_app.py
-```
-
-1.  **Input:** Paste your raw OCR text into the **"📥 Raw OCR Input"** field.
-2.  **Configuration:** Use the sidebar to toggle "Expand Abbreviations" (`agus` vs `⁊`) or "Strict Linguistic Mode" (vowel harmony highlighting).
-3.  **Review:** Examine the **"Anomaly Dashboard"** in the sidebar to review potential errors.
-4.  **Export:** Copy the corrected text from the **"🚀 ClóScaoil Output"** panel.
+### 📦 Option 2: Full-Book Batch Production
+For high-scale processing of the entire manuscript:
+1.  **Tab:** Select the **"🚀 Batch Production"** tab in the UI.
+2.  **Directories:** Define your **Input Directory** (folder of `.md` chapters) and **Output Directory**.
+3.  **Policy:** Choose a **Vision Audit Policy**:
+    *   `manual`: The engine stops if noise is detected.
+    *   `always`: Automated **Silent Mode** triggers Gemini Vision for any high-noise page.
+4.  **Run:** Click **"Start Batch Run"** to process all files sequentially.
+5.  **Finalize:** Once the batch completes, use the **"✨ Generate Golden Copy"** button to consolidate the full manuscript into a single edition.
 
 ### 📜 Option 2: Command Line (Batch Processing)
 For processing entire markdown files or batch operations:
@@ -82,15 +82,17 @@ ClóScaoil v3.0 introduces a **Vision Auditor** capable of cross-referencing you
 
 ### 🖼️ Automated Image Sourcing
 1.  **Define Workspace:** Set your **Scan Directory** in the sidebar (default: `scans/`).
-2.  **Matching Logic:** The engine automatically searches for images matching the `[l.XXX]` page number (e.g., `page_045.jpg` or `45.png`).
-3.  **Manual Upload:** If no local file is found, use the **"Upload Scan"** widget above the output preview.
+2.  **Supported Formats:** The engine automatically searches for several naming conventions:
+    *   `page_045.jpg / .png`
+    *   `045.jpg / .png`
+    *   `p45.jpg / .png` (Expanded in v3.2)
+3.  **Manual Upload:** If no local file is found in the **Lab**, use the **"Upload Scan"** widget above the output preview.
 
 ### 🔍 Triggering a Visual Audit
-If the engine detects a **High Error Density** (>5 linguistic violations), it will interrupt the output with a warning.
-1.  Ensure an image is loaded (either via directory matching or upload).
-2.  Click **"Trigger Gemini Visual Audit"**.
-3.  Gemini 1.5 Pro will analyze the "ponc" dots and shorthands in the scan and return a corrected transcription.
-4.  Review the result and choose to either **Accept** or **Reset** to heuristic output.
+If the engine detects a **High Error Density** (>5 linguistic violations), it will flag the page.
+1.  **Lab Mode:** Click **"Trigger Gemini Visual Audit"** in the UI.
+2.  **Production Mode:** If **"Vision Audit Policy: Always"** is selected, the audit triggers automatically in the background.
+3.  **API Throttling:** The engine includes a `time.sleep(1)` delay during batch vision audits to ensure API stability and avoid rate limits.
 
 ---
 

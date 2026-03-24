@@ -434,6 +434,7 @@ class BatchProcessor:
         possible_names = [
             f"page_{page_str}.jpg", f"page_{page_str}.png", 
             f"{page_num}.jpg", f"{page_num}.png",
+            f"{page_str}.jpg", f"{page_str}.png",
             f"p{page_num}.jpg", f"p{page_num}.png"
         ]
         for name in possible_names:
