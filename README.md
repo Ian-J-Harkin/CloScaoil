@@ -49,10 +49,9 @@ The repository includes a modern, interactive dashboard for real-time text proce
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env` file in the root directory:
-    ```env
-    GEMINI_API_KEY=your_api_key_here
-    ```
+    It is highly recommended to set a permanent environment variable on your operating system:
+    - **Windows:** `setx GEMINI_API_KEY "your_key_here"`
+    - **macOS/Linux:** `export GEMINI_API_KEY="your_key_here"`
 
 ---
 

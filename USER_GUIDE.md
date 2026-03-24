@@ -1,11 +1,19 @@
 # 🛡️ ClóScaoil Engine (v2.0) User Guide
-**Manannán Digitization Lab | Phase A: Heuristic Intelligence**
+**Manannán Digitization Lab | Phase B: Ambiguity Arbitration**
 
-Welcome to the **ClóScaoil Engine**, the surgical OCR correction system designed specifically for the 1943 Cló Gaelach (Gaelic Type) digitization of the *Manannán* series. This engine transitions the project from simple "Search & Replace" to **Heuristic Intelligence** while maintaining linguistic integrity.
+Welcome to the **ClóScaoil Engine**, the surgical OCR correction system designed specifically for the 1943 Cló Gaelach (Gaelic Type) digitization of the *Manannán* series. This engine transitions the project from simple "Search & Replace" to **Heuristic Intelligence** and **LLM Arbitration** while maintaining linguistic integrity.
 
 ---
 
 ## 🚀 Getting Started
+
+### 🔑 API Configuration
+To enable the **Ambiguity Arbitrator** (Automated Choice Resolution), you must provide a Google Gemini API Key.
+
+1.  **Set Environment Variable:** The engine prioritizes your operating system’s environment variables.
+    *   **Windows:** `setx GEMINI_API_KEY "your_key_here"`
+    *   **macOS/Linux:** `export GEMINI_API_KEY="your_key_here"`
+2.  **Streamlit Secrets (Optional):** If deploying to Streamlit Cloud, add `GEMINI_API_KEY` to your app's secrets dashboard.
 
 ### 🖥️ Option 1: Live Interactive UI (Streamlit)
 For immediate correction and real-time linguistic validation, launch the Streamlit dashboard:
@@ -26,8 +34,8 @@ For processing entire markdown files or batch operations:
 # Basic usage
 python ocr_fixer.py input_chapter.md --output fixed_chapter.md
 
-# Process with full features and a report
-python ocr_fixer.py caibidil_01.md --expand-abbreviations --strict --report anomalies.json
+# Process with full features, LLM arbitration, and a report
+python ocr_fixer.py caibidil_01.md --expand-abbreviations --strict --api-key YOUR_KEY --report anomalies.json
 ```
 
 ---
