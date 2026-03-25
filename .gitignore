@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+pytest_results.txt
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Processing Residuals
+scans/
+scans_output/
+*.md_fixed
+*.json_report
+production_log.json
+resolution_cache.json
+anomalies.json
+errors.json
+golden.txt
+*.epub
+
+# Mock configs
+config/corrections_dict_test.json
+config/caighdean_2012_test.json

@@ -1,12 +1,17 @@
-# ClóScaoil Engine To-Do List
+# ClóScaoil Engine To-Do List (v5.1-ARCHIVAL STABLE)
 
-## 🚀 Testing Tasks
-- [ ] **Heuristic Verification (Chapter Test)**: Run one or more chapters through the Stage 2 pipeline (OCR Fixer) to specifically observe the new v2.0 heuristics in action:
-    - **Speck-to-Ponc**: Verify if `b.`, `c'`, `d*`, etc., are correctly converted to `ḃ`, `ċ`, `ḋ`.
-    - **Vowel Harmony**: Check the "Ambiguous Matches" report for words prefixed with ⚠️ (e.g., `⚠️fílan`). Ensure the AI/User can manually resolve these harmony violations.
-    - **Tironian Et**: Confirm standalone `7`, `>`, or `&` symbols are correctly normalized to `agus`.
+## ✅ Completed Milestones
+- [x] **Phase A: Surgical Heuristics**: Four-stage processing hierarchy + Streamlit Lab.
+- [x] **Phase B: Linguistic Intelligence**: Vowel Harmony (Caol le Caol) + Tironian Et normalization.
+- [x] **Phase C: Visual Restoration**: Speck-to-Ponc heuristics for lenition noise reduction.
+- [x] **Phase D: Production Hardening**: BatchProcessor + "Silent Mode" Vision Audit Policy.
+- [x] **Phase E: Archival Export**: EpubBuilder (EPUB 3.0) + Gaelic-specific CSS/ToC.
+- [x] **Phase F: Universal LLM**: LiteLLM integration + API provider selector.
+- [x] **Phase G: 2012 Modernization**: Caighdeán Oifigiúil Modernizer + grammatical shifts.
+- [x] **Phase G-Maintenance**: Archival hardening + full foundational unit test suite (22 tests).
 
-## 🛠️ Next Steps (Phase B)
-- [ ] **Contextual Deep Repair**: Transition from regex-based heuristics to more advanced contextual patterns for ambiguous words (e.g., better `ar` vs `ár` handling).
-- [ ] **Reporting Improvements**: Enhance the Streamlit "Ambiguous Matches" dashboard to allow one-click corrections for discovered harmony violations.
-- [ ] **User Factors Review**: Conduct a usability audit of the Streamlit interface (currently flagged as "unfriendly") to simplify the digitization workflow.
+## 🚀 Future Roadmap
+- [ ] **Advanced Semantic Repair**: Improve Nominative-for-Genitive detection for edge-case Munster sub-dialects.
+- [ ] **Extended Modernization Map**: Expand `config/caighdean_2012.json` with regional vocabulary shifts.
+- [ ] **UI Professionalization**: Integrate real-time EPUB previewing directly in the Streamlit Lab.
+- [ ] **Cloud-Native Deployment**: Optimize for high-throughput headless processing in containerized environments.

@@ -94,3 +94,12 @@ Core Tests (test_ocr_fixer.py): Covers version enforcement, shorthand normalisat
 Moderniser Tests (test_modernizer.py): Validates lexical mapping, suffix replacement, and modernisation pipeline integration.
 
 API Diagnostics (test_api.py): A standalone utility that verifies environment variable presence and performs lightweight handshake calls against each configured LLM provider.
+
+10. Supporting Utility Suite (Legacy ManannanUtils)
+The engine is supported by a suite of forensic and administrative tools originally developed as part of the ManannanUtils project:
+
+Linguistic Transliteration (convert_orthography.py): A standalone CLI tool that converts "Old Orthography" (dotted consonants like ḃ, ċ) into "New Orthography" (bh, ch) — essential for generating standard digital text from Gaelic Type manuscripts.
+
+Dictionary Infusion (fine_tune.py): An administrative utility for batch-injecting human-verified corrections into the configuration layer. It includes "Smart Classification" logic to automatically route multi-word snippets into contextual phrase rules while keeping single-word swaps in the verified dictionary.
+
+Forensic Diagnostics: A collection of low-level utilities (inspect_chars.py, inspect_join_hex.py, diagnostic_joins.py) for debugging Unicode normalization issues and byte-level character corruption in high-noise OCR workflows.
