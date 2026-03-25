@@ -1,5 +1,6 @@
 streamlit
 litellm
+python-dotenv
 argparse
 Pillow
 pytest
