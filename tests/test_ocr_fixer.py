@@ -82,6 +82,96 @@ def test_dictionary_precedence(fixer):
     processed, _, _ = fixer.process_text("7")
     assert processed == "SEVEN" 
 
+# === Phase A/B Foundation Tests ===
+
+def test_shorthand_expansion_mode(fixer):
+    """Tironian Et expansion to 'agus' when configured."""
+    assert fixer.normalize_shorthand(" 7 ", expand=True).strip() == "agus"
+    assert fixer.normalize_shorthand(" > ", expand=True).strip() == "agus"
+    # Standard mode should give the symbol
+    assert fixer.normalize_shorthand(" 7 ", expand=False).strip() == "\u204a"
+
+def test_visual_heuristics_uppercase(fixer):
+    """Speck-to-Ponc must also handle uppercase consonants."""
+    assert fixer.apply_visual_heuristics("B.") == "Ḃ"
+    assert fixer.apply_visual_heuristics("S'") == "Ṡ"
+    assert fixer.apply_visual_heuristics("T*") == "Ṫ"
+    assert fixer.apply_visual_heuristics("M.") == "Ṁ"
+
+def test_global_replacements(fixer):
+    """Phase A: Character substitutions and punctuation spacing."""
+    # Set up config with global replacements
+    fixer.data["global_replacements"] = {
+        "chars": {"ſ": "s"},
+        "punctuation_spacing": True
+    }
+    # Long s replacement
+    result = fixer.apply_global_replacements("ſaol")
+    assert result == "saol"
+    
+    # Punctuation spacing: remove space before punctuation, add space after
+    result = fixer.apply_global_replacements("focal ,focal")
+    assert result == "focal, focal"
+    
+    # Multiple spaces collapsed
+    result = fixer.apply_global_replacements("focal    focal")
+    assert result == "focal focal"
+
+def test_dehyphenate(fixer):
+    """Phase A: Line-break de-hyphenation with Irish prefix preservation."""
+    # Standard hyphenation should rejoin
+    result = fixer.dehyphenate("Man-\nannán")
+    assert "Manannán" in result
+    
+    # n- prefix should be preserved (Irish eclipsis)
+    result = fixer.dehyphenate("n-\náisiún")
+    assert "n-áisiún" in result
+    
+    # t- prefix should be preserved
+    result = fixer.dehyphenate("t-\nathair")
+    assert "t-athair" in result
+
+def test_stray_caps_fix(fixer):
+    """Phase A: OCR capitalisation errors mid-sentence."""
+    # Mid-sentence stray capital
+    result = fixer.apply_stray_caps_fix("agus Focal eile")
+    assert "focal" in result.lower() or "focal" in result
+    
+    # Mixed-case OCR error (e.g., "buaLaḋ")
+    result = fixer.apply_stray_caps_fix("buaLaḋ")
+    assert result == "bualaḋ"
+    
+    # Valid mutation prefixes should be handled
+    result = fixer.apply_stray_caps_fix("bhFuil")
+    assert result.startswith("bh")
+
+def test_contextual_heuristics(fixer):
+    """Phase A: Phrase-level grammatical corrections."""
+    fixer.data["dictionary"]["contextual"] = [
+        {"pattern": "go ṁ", "replacement": "go m"},
+        {"pattern": " nior ", "replacement": " níor "}
+    ]
+    
+    result = fixer.apply_contextual_heuristics("agus go ṁaith é")
+    assert "go maith" in result
+    
+    result = fixer.apply_contextual_heuristics("dúirt sé nior ṫáinig sí")
+    assert "níor" in result
+
+def test_page_header_detection(fixer):
+    """Phase A: Configurable page header patterns."""
+    fixer.data["global_replacements"]["page_header_patterns"] = [
+        "^MANANNÁN.*$"
+    ]
+    # Short line matching pattern with key character
+    assert fixer.is_page_header("MANANNÁN") is True
+    # Regular text should not match
+    assert fixer.is_page_header("This is a regular sentence about the day.") is False
+    # Empty lines should not match
+    assert fixer.is_page_header("") is False
+    # Page markers should not match
+    assert fixer.is_page_header("[l.30]: #") is False
+
 def test_image_fallback_naming(fixer):
     from ocr_fixer import BatchProcessor
     bp = BatchProcessor(fixer)

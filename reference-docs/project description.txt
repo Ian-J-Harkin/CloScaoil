@@ -87,9 +87,9 @@ Universal Line Endings: All output files enforce Unix-standard newlines (newline
 Strict Encoding: All file operations explicitly enforce UTF-8 encoding to prevent platform-specific defaults (like Windows CP-1252) from corrupting the Irish diacritics and lenition characters.
 
 9. Testing & Quality Assurance
-The project maintains a comprehensive regression test suite (15 passing tests):
+The project maintains a comprehensive regression test suite (22 passing tests):
 
-Core Tests (test_ocr_fixer.py): Covers version enforcement, shorthand normalisation, visual heuristics, vowel harmony, cross-platform path handling, image matching (including case-insensitive .JPG/.PNG), golden copy generation, newline consistency, highlight rendering order, and modernisation toggle integrity.
+Core Tests (test_ocr_fixer.py): Covers version enforcement, shorthand normalisation (standard and expansion mode), visual heuristics (lowercase and uppercase lenition), vowel harmony, dictionary precedence, violation gating threshold, cross-platform path handling, global character replacements, punctuation spacing, de-hyphenation with Irish prefix preservation, stray capitalisation fix (including mutation prefix awareness), contextual phrase heuristics, page header detection, image matching (including case-insensitive .JPG/.PNG), golden copy generation, newline consistency, highlight rendering order, and modernisation toggle integrity.
 
 Moderniser Tests (test_modernizer.py): Validates lexical mapping, suffix replacement, and modernisation pipeline integration.
 
