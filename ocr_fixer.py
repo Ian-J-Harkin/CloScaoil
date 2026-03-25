@@ -376,8 +376,9 @@ class UniversalLLMManager:
         
         prompt = (
             "You are an editor for Rannóg an Aistriúcháin. Update this 1958 Irish text "
-            "to the 2012 Official Standard. Focus on replacing synthetic verb forms (e.g., 'mholamar' to 'mhol muid') "
-            "and applying nominative objects for verbal nouns where permitted.\n"
+            "to the 2017 Official Standard (An Caighdeán Oifigiúil). "
+            "1. You MUST apply 'Foirm an Ainmnigh in ionad an Ghinidigh' (Chapter 3.3.9): If an indefinite noun follows 'ag' + [Verbal Noun], and is qualified by an adjective, the word 'aon', a relative clause, or an adjectival phrase (e.g. 'ar bith'), it MUST be shifted from the Genitive case to the Nominative case (e.g., 'ag imirt peile Meiriceánaí' -> 'ag imirt peil Mheiriceánach'). Do not alter definite nouns.\n"
+            "2. Ensure archaic synthetic verb forms are updated to preferred analytic forms where standard (e.g., 'mholamar' to 'mhol muid').\n"
             "Return ONLY the updated text. Original text:\n" + sentence
         )
         try:

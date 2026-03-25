@@ -10,15 +10,24 @@
 
 ## ⚖️ System Integrity (Current State)
 - **Unit Tests:** 22/22 tests passing in `tests/test_ocr_fixer.py`.
-- **Modernizer Tests:** 3/3 tests passing in `tests/test_modernizer.py`.
+- **Modernizer Tests:** 2/2 tests passing in `tests/test_modernizer.py`.
+- **Total Tests:** 24 passing.
 - **Version:** Synchronized across `ocr_fixer.py` and `streamlit_app.py` at **v5.1-ARCHIVAL**.
-- **Working Tree:** Clean. Repository is 11 commits ahead of `origin/main`.
+- **Working Tree:** Clean. Repository is fully in sync with `origin/main`.
 
-## Next Session Priorities
-1. **GitHub Synchronization:** Review and push the current 11 commits to `origin/main` to enable remote collaboration.
-2. **Expansion of Modernization Map:** Conduct a data-driven audit of `config/caighdean_2012.json` to include edge-case lexical shifts identified during full-manuscript processing.
-3. **Linguistic Benchmarking:** Run a full-book performance test on the "Manannán" Chapter 4-10 set to verify multi-provider LLM arbitration speeds and accuracy.
-4. **EPUB Visual Audit:** Test the generated e-books on a physical Kindle device to verify sideloaded font rendering for lenition marks.
+## ✅ Previously Outstanding Items — Now Resolved
+1. **GitHub Synchronization:** ✅ DONE. Repository is fully in sync with `origin/main` (confirmed 2026-03-25).
+2. **Header Patterns in JSON:** ✅ DONE. `is_page_header()` already reads `page_header_patterns` from `config/corrections_dict.json` — no hardcoded patterns in Python.
+
+3. **Modernization Map Expansion:** ✅ DONE. Expanded `config/caighdean_2012.json` to a robust 30+ item matrix of statutory lexical shifts.
+4. **Chapter 04 Processing:** ✅ DONE. Extract rules from `AGREED_FIXES.md` safely managed, `manannan04.md` processed for layout & heuristics, and walkthrough artifact compiled.
+
+## 🔴 Manual Validation Priorities (Moved & Blocked)
+The following tasks are structurally complete but logically blocked without human hardware/credential intervention. **Please refer to `MANUAL_TESTING.md`** to execute these locally:
+1. **Linguistic Benchmarking (Chapters 4–10):** *Blocked: Requires passing active API Key via terminal environment (`.env`).*
+2. **EPUB Visual Audit:** *Blocked: Requires physical Kindle/Kobo device testing for lenition font rendering.*
+3. **Advanced Semantic Repair (Munster Dialect Tune):** *Blocked: Requires live LLM session iteration inside `ocr_fixer.py`.*
 
 ---
 *Manannán Digitization Lab | Phase G: 2012 Linguistic Modernization Complete (v5.1-ARCHIVAL STABLE)*
+*Waypoint reviewed and updated: 2026-03-25*

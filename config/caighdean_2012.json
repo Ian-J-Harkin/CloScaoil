@@ -1,16 +1,40 @@
 {
   "suffix_replacements": {
     "ughadh": "ú",
+    "ughaidh": "aithe",
+    "ighe": "í",
     "idhe": "í",
     "idhibh": "í",
+    "ighthe": "ithe",
+    "ightheacha": "itheacha",
     "imíd": "imid",
-    "fadh muid": "fadh muid"
+    "fadh muid": "fadh muid",
+    "ughadh": "ú"
   },
   "exact_matches": {
     "tráigh": "trá",
     "urdhubhadh": "urú",
     "beirbhiughadh": "beiriú",
     "cluaidhe": "cluaí",
-    "cruadh-": "crua-"
+    "cruadh-": "crua-",
+    "croidhe": "croí",
+    "croidhthe": "croíthe",
+    "laetheanta": "laethanta",
+    "nodlaig": "nollaig",
+    "Nodlaig": "Nollaig",
+    "indé": "inné",
+    "indiu": "inniu",
+    "i mbárach": "amárach",
+    "Bainríoghan": "Banríon",
+    "bainríoghan": "banríon",
+    "ríoghan": "ríon",
+    "guidhe": "guí",
+    "nuaidheact": "nuaíocht",
+    "sgríobh": "scríobh",
+    "sgríobhadh": "scríobhadh",
+    "sgéal": "scéal",
+    "sgéalta": "scéalta",
+    "sgoil": "scoil",
+    "sgoileanna": "scoileanna"
   }
 }

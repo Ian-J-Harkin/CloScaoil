@@ -345,7 +345,6 @@
       "gac": "gaċ",
       "gaib": "ġaiḃ",
       "gcaitfear": "gcaiṫfear",
-      "gciandracán": "gCiandracán",
       "gcoinnib": "gcoinniḃ",
       "gcomair": "gcoṁair",
       "gcomnuide": "gcoṁnuiḋe",
@@ -424,7 +423,6 @@
       "mbead": "mbeaḋ",
       "mbeid": "mbeiḋ",
       "mbodrad": "mboḋraḋ",
-      "mbóṫari": "mbóṫar",
       "meabair": "ṁeaḃair",
       "meadbán": "meaḋḃán",
       "meartall": "mearṫall",
@@ -693,6 +691,23 @@
       "ar": [
         "ar",
         "ár"
+      ],
+      "mbóṫari": [
+        "mbóṫar",
+        "mbóṫair",
+        "mbóṫarí"
+      ],
+      "gCiandracán": [
+        "gciandracán",
+        "gCiandracán"
+      ],
+      "gciandracán": [
+        "gciandracán",
+        "gCiandracán"
+      ],
+      "tÁrd-Ṁáiġistir": [
+        "tárd-Ṁáiġistir",
+        "tÁrd-Ṁáiġistir"
       ]
     }
   },

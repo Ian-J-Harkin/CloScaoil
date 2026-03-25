@@ -11,7 +11,7 @@
 - [x] **Phase G-Maintenance**: Archival hardening + full foundational unit test suite (22 tests).
 
 ## 🚀 Future Roadmap
-- [ ] **Advanced Semantic Repair**: Improve Nominative-for-Genitive detection for edge-case Munster sub-dialects.
-- [ ] **Extended Modernization Map**: Expand `config/caighdean_2012.json` with regional vocabulary shifts.
+- [x] **Extended Modernization Map**: Expanded `config/caighdean_2012.json` with robust 1940s regional vocabulary shifts.
+- [ ] **Advanced Semantic Repair**: Improve Nominative-for-Genitive detection for edge-case Munster sub-dialects. *(Moved to `MANUAL_TESTING.md`)*
 - [ ] **UI Professionalization**: Integrate real-time EPUB previewing directly in the Streamlit Lab.
 - [ ] **Cloud-Native Deployment**: Optimize for high-throughput headless processing in containerized environments.

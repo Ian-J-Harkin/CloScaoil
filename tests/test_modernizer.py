@@ -17,8 +17,9 @@ def test_lexical_modernization(modernizer):
     
     # Test case sensitivity
     assert modernizer.apply_lexical("TRÁIGH") == "trá" # re.IGNORECASE makes it lower if the replacement is lower
-    
-    # Test suffixes
+
+def test_suffix_modernization(modernizer):    
+    # Test suffixes from caighdean_2012.json suffix_replacements
     # -idhe -> -í
     assert modernizer.apply_lexical("staraidhe") == "staraí"
     assert modernizer.apply_lexical("múchughadh") == "múchú"
