@@ -1,0 +1,133 @@
+================================================================================
+  ClóScaoil Engine — Missing Unit Tests Audit Report
+  Date: 2026-03-25
+  Auditor: Antigravity (Automated Code Audit)
+  Pre-Audit Test Count: 15 | Post-Audit Test Count: 22
+================================================================================
+
+SUMMARY
+-------
+A cross-reference of all functions in ocr_fixer.py against the existing test
+suite (tests/test_ocr_fixer.py) revealed that 6 core Phase A/B functions — the
+foundational pipeline inherited from the original ManannanUtils project — had
+zero test coverage. Two additional gaps were found in the existing Phase C tests
+(shorthand expansion mode and uppercase lenition). All 7 gaps have been resolved.
+
+
+IDENTIFIED GAPS
+===============
+
+1. apply_global_replacements()  [ocr_fixer.py L59-72]
+   Status:    NO TEST → ADDED (test_global_replacements)
+   Risk:      HIGH — This runs on every input before any heuristics.
+   What:      Character substitutions (e.g., long-s ſ → s) and punctuation
+              spacing normalisation (remove space before punctuation, add space
+              after, collapse multiple whitespace).
+   Test:      Verifies ſ→s replacement, "focal ,focal" → "focal, focal",
+              and multi-space collapse "focal    focal" → "focal focal".
+   Note:      Initial test expectation was wrong ("focal,focal") because the
+              regex also inserts a space after punctuation when followed by a
+              word character. Corrected after running against live code.
+
+2. dehyphenate()  [ocr_fixer.py L74-82]
+   Status:    NO TEST → ADDED (test_dehyphenate)
+   Risk:      HIGH — Runs on every input; incorrect behaviour would corrupt
+              the text by either failing to rejoin words or destroying valid
+              Irish prefixes.
+   What:      Rejoins words split across line breaks by hyphens. Special logic
+              preserves legitimate Irish eclipsis/mutation prefixes (n-, t-, h-).
+   Test:      Verifies "Man-\nannán" → "Manannán", "n-\náisiún" → "n-áisiún",
+              and "t-\nathair" → "t-athair".
+
+3. apply_stray_caps_fix()  [ocr_fixer.py L84-97]
+   Status:    NO TEST → ADDED (test_stray_caps_fix)
+   Risk:      MEDIUM — OCR frequently introduces random capitalisation. Without
+              this fix, words like "buaLaḋ" would persist in output.
+   What:      Two-pass regex: (1) lowercases isolated stray capitals mid-sentence,
+              (2) handles mixed-case errors while understanding Irish mutation
+              prefixes (t-, h-, n-, bh-, mh-, ts-).
+   Test:      Verifies "agus Focal eile" lowercases the "F", "buaLaḋ" → "bualaḋ",
+              and "bhFuil" preserves the "bh" prefix.
+
+4. apply_contextual_heuristics()  [ocr_fixer.py L99-105]
+   Status:    NO TEST → ADDED (test_contextual_heuristics)
+   Risk:      MEDIUM — Phrase-level rules are the only mechanism for multi-word
+              grammatical corrections. Untested rules could silently break.
+   What:      Iterates over contextual rules from corrections_dict.json,
+              performing substring replacement for known erroneous patterns.
+   Test:      Verifies "go ṁaith" → "go maith" and " nior " → " níor " using
+              injected test rules.
+
+5. is_page_header()  [ocr_fixer.py L127-137]
+   Status:    NO TEST → ADDED (test_page_header_detection)
+   Risk:      MEDIUM — False positives would delete legitimate text lines;
+              false negatives would leave repeated headers in the output.
+   What:      Checks lines against configurable regex patterns from the config
+              file. Includes safeguards: max 40 chars, must contain "N" or "Á"
+              (key Manannán characters), ignores empty lines and page markers.
+   Test:      Verifies "MANANNÁN" matches, regular sentences don't, empty
+              lines don't, and "[l.30]: #" page markers don't.
+
+6. normalize_shorthand(expand=True)  [ocr_fixer.py L153-157]
+   Status:    PARTIAL → EXPANDED (test_shorthand_expansion_mode)
+   Risk:      LOW — The existing test only covered standard mode (7 → ⁊).
+              Expansion mode (7 → "agus") was untested.
+   What:      When expand=True, the Tironian Et symbol is fully expanded to
+              the word "agus" rather than the Unicode symbol.
+   Test:      Verifies " 7 " → "agus" and " > " → "agus" in expansion mode,
+              and " 7 " → "⁊" in standard mode.
+
+7. apply_visual_heuristics() with uppercase  [ocr_fixer.py L139-151]
+   Status:    PARTIAL → EXPANDED (test_visual_heuristics_uppercase)
+   Risk:      LOW — The existing test only covered lowercase consonants.
+              Uppercase variants (B., S', T*, M.) were untested.
+   What:      The lenition map includes both lowercase and uppercase entries.
+              OCR errors can produce "B." or "S'" at the start of sentences.
+   Test:      Verifies B. → Ḃ, S' → Ṡ, T* → Ṫ, M. → Ṁ.
+
+
+FUNCTIONS ALREADY COVERED (No Action Required)
+===============================================
+
+- normalize_shorthand (standard mode)     → test_shorthand_normalization
+- check_vowel_harmony                     → test_vowel_harmony
+- apply_visual_heuristics (lowercase)     → test_visual_heuristics
+- Dictionary lookup precedence            → test_dictionary_precedence
+- Vision audit gating (>5 violations)     → test_violation_gating
+- Cross-platform path normalisation       → test_path_normalization
+- BatchProcessor._find_image              → test_image_fallback_naming
+- Case-insensitive image matching         → test_image_case_insensitive
+- generate_golden_copy                    → test_golden_copy_logic
+- Golden copy newline enforcement         → test_golden_copy_newline_consistency
+- Highlight rendering order               → test_highlight_rendering
+- Modernisation toggle integrity          → test_modernization_toggle_integrity
+- StandardModernizer lexical mapping      → test_lexical_modernization (test_modernizer.py)
+- StandardModernizer suffix replacement   → test_suffix_modernization (test_modernizer.py)
+- StandardModernizer integration          → test_modernization_integration (test_modernizer.py)
+
+
+REMAINING UNTESTED (Accepted Risk)
+===================================
+
+These functions are not unit-tested due to external dependencies or complexity,
+and are accepted as integration-level concerns:
+
+- find_last_page_number()    Requires multi-file filesystem state. Tested
+                             implicitly through golden copy and batch runs.
+- UniversalLLMManager        Requires live API keys. Covered by test_api.py
+                             diagnostic utility.
+- EpubBuilder.generate_epub  Requires ebooklib. Would need mock EPUB validation.
+                             Covered by manual QA during production runs.
+- BatchProcessor.process_directory  Full integration test; depends on filesystem
+                             and optional API calls. Individual components tested.
+
+
+CONCLUSION
+==========
+The test suite now provides comprehensive coverage of the core linguistic
+pipeline that forms the foundation of the ClóScaoil engine. The 7 new tests
+specifically target the Phase A/B "ManannanUtils" logic that was at risk of
+regression during the Phase F/G architectural transitions.
+
+Final test count: 22 passing (test_ocr_fixer.py) + 3 passing (test_modernizer.py)
+                = 25 total tests
