@@ -13,5 +13,6 @@
 ## 🚀 Future Roadmap
 - [x] **Extended Modernization Map**: Expanded `config/caighdean_2012.json` with robust 1940s regional vocabulary shifts.
 - [ ] **Advanced Semantic Repair**: Improve Nominative-for-Genitive detection for edge-case Munster sub-dialects. *(Moved to `MANUAL_TESTING.md`)*
+- [ ] **Phase H: Dictionary Validator**: Download BuNaMo dataset and build a standalone script to automatically extract historical spelling rules.
 - [ ] **UI Professionalization**: Integrate real-time EPUB previewing directly in the Streamlit Lab.
 - [ ] **Cloud-Native Deployment**: Optimize for high-throughput headless processing in containerized environments.

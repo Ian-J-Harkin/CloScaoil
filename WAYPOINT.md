@@ -28,6 +28,11 @@ The following tasks are structurally complete but logically blocked without huma
 2. **EPUB Visual Audit:** *Blocked: Requires physical Kindle/Kobo device testing for lenition font rendering.*
 3. **Advanced Semantic Repair (Munster Dialect Tune):** *Blocked: Requires live LLM session iteration inside `ocr_fixer.py`.*
 
+## 🔵 Phase H Initiative: Open-Source Dictionary Integration
+To fulfill the original architectural design requirement of cross-referencing against authoritative dictionaries (without compromising the light regex speed of `ocr_fixer.py`), the following tasks are newly scheduled (see `PHASE_H_SUMMARY.md`):
+1. **Acquire Open-Source Lexicon:** Download the Irish National Morphology Database (BuNaMo) dataset locally.
+2. **Build Verification Script:** Create a standalone `dictionary_validator.py` to cross-reference historical spellings against the dictionary and automatically build rules for our core matrix.
+
 ---
-*Manannán Digitization Lab | Phase G: 2012 Linguistic Modernization Complete (v5.1-ARCHIVAL STABLE)*
+*Manannán Digitization Lab | Phase G Complete -> Phase H Initialized (v5.1-ARCHIVAL STABLE)*
 *Waypoint reviewed and updated: 2026-03-25*
