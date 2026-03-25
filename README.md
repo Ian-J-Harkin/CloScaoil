@@ -123,7 +123,7 @@ CloScaoil/
 │   ├── corrections_dict.json    # Dictionary mappings & heuristic rules
 │   └── caighdean_2012.json      # 2012 Caighdeán modernization map
 ├── tests/
-│   ├── test_ocr_fixer.py        # Core engine unit tests (14 tests)
+│   ├── test_ocr_fixer.py        # Core engine unit tests (15 tests)
 │   └── test_modernizer.py       # Modernizer unit tests
 ├── reference-docs/              # Phase specification documents
 ├── USER_GUIDE.md                # Comprehensive user documentation

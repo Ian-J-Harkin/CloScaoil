@@ -37,8 +37,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title & Description
-st.title("🛡️ ClóScaoil Engine (v3.1-PRODUCTION)")
-st.caption("Manannán Digitization Lab | Surgical OCR Correction & Heuristic Intelligence")
+st.title("🛡️ ClóScaoil Engine (v5.1-ARCHIVAL)")
+st.caption("Manannán Digitization Lab | Surgical OCR Correction, Heuristic Intelligence & 2012 Modernization")
 
 # Initialize Engine
 @st.cache_resource(hash_funcs={"_thread.RLock": lambda _: None}, experimental_allow_widgets=True)

@@ -1,0 +1,96 @@
+The ClóScaoil Engine (v5.1-ARCHIVAL STABLE) is a sophisticated digitization and linguistic restoration suite specifically engineered to transition 1943-era Cló Gaelach (Gaelic Type) manuscripts into high-quality, modern digital formats.
+
+The project is structured around a multi-stage processing pipeline that balances strict historical preservation with modern readability.
+
+1. Core Linguistic Processing Pipeline (Heuristics)
+The engine employs a four-stage execution hierarchy to correct OCR errors without "over-correcting" the text:
+
+Surgical Dictionary Lookup: The first line of defense uses a corrections_dict.json file. If a word is found in the verified dictionary, it is replaced immediately, bypassing all other heuristic rules to ensure human-verified accuracy. The dictionary also supports ambiguous word sets (where multiple valid corrections exist) and contextual phrase rules for multi-word grammatical patterns (e.g., "go ṁ" ➔ "go m").
+
+Shorthand Normalization: Specifically targets the Tironian Et symbol (⁊). The engine identifies OCR misreads like 7 or > when isolated by whitespace and normalizes them to the correct Unicode character (\u204a) or expands them to "agus" based on user preference.
+
+Visual Heuristics (Speck-to-Ponc): A specialized "Speck Fixing" algorithm identifies lenitable consonants followed by OCR noise (dots, quotes, or asterisks) and restores the correct lenited character (e.g., b. ➔ ḃ). Supports all nine lenitable consonants in Irish (b, c, d, f, g, m, p, s, t).
+
+Linguistic Validation (Vowel Harmony): The final pass checks every word against the Irish "Caol le Caol" (Slender with Slender) rule, where broad vowels (a, o, u) must match broad and slender vowels (e, i) must match slender across consonant clusters. Words violating this harmony are flagged in the Anomaly Dashboard and optionally highlighted with ==word== markers in Strict Mode.
+
+2. Additional Text Normalisation
+Beyond the four-stage heuristic hierarchy, the engine applies several supplementary cleaning passes:
+
+De-hyphenation: Automatically rejoins words split across line breaks by a hyphen (e.g., "Man-\nannán" ➔ "Manannán"), while intelligently preserving legitimate hyphens (e.g., "n-" and "t-" prefixes).
+
+Stray Capitalisation Fix: Detects and corrects OCR-introduced capitalisation errors mid-sentence. Understands Irish mutation prefixes (e.g., "tS" becomes "ts" while preserving valid eclipsis forms like "bhF" ➔ "bhf").
+
+Page Header Detection: Identifies and handles repeated page headers using configurable regex patterns, preventing them from contaminating the body text.
+
+Global Character Replacements: Applies systematic character substitutions and punctuation spacing corrections defined in the configuration file.
+
+3. Universal LLM Integration (Phase F)
+Transitioning beyond a single-provider model, the engine utilises a provider-agnostic architecture via LiteLLM:
+
+Multi-Model Support: Through the UniversalLLMManager wrapper class, the system can call Gemini 1.5 Pro/Flash, Claude 3.5 Sonnet, GPT-4o, or any model available via OpenRouter — all switchable live from the Streamlit UI sidebar.
+
+Ambiguity Arbitration: When the heuristics encounter multiple valid corrections for a word (from the "ambiguous" dictionary), the engine sends the surrounding sentence context to the selected LLM with a specialised prompt for 1940s Irish orthography. Resolutions are stored in a local 3-word context cache (config/resolution_cache.json) to minimise API calls and ensure consistency across repeated patterns.
+
+OS-Level Key Management: API keys are handled securely via Operating System environment variables (GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY), ensuring no sensitive data is stored within the codebase. A test_api.py diagnostic utility is included to verify all configured providers with a lightweight handshake.
+
+4. Multimodal Vision Auditing
+To handle high-noise pages where standard OCR fails, the engine incorporates a "Gated Vision" system:
+
+Automatic Gating: If a page exceeds five vowel harmony violations, the system flags it as requiring a "Visual Audit".
+
+Direct Comparison: The engine sends the original manuscript scan (as a base64-encoded image payload) and the current OCR text to a vision-capable LLM to identify missing lenition marks (ponc séimhithe) and specialised symbols like the Tironian et directly from the image.
+
+Fuzzy Image Matching: The system automatically locates relevant scans in a local directory using case-insensitive matching across multiple naming conventions (e.g., page_045.jpg, page_045.JPG, p45.png, 045.jpg). Manual upload is also supported via the Lab interface.
+
+API Throttling: A built-in time.sleep(1) delay between vision calls during batch processing prevents API rate limit violations.
+
+5. Batch Production & Archival Export
+Designed for high-volume digitisation, the suite includes professional-grade production tools:
+
+Batch Processor: Allows for the automated processing of entire folders of manuscript chapters. It includes a "Silent Mode" policy that can automatically trigger vision audits in the background. All UI toggles (Expand Abbreviations, Strict Mode, 2012 Modernization) are correctly forwarded to the batch pipeline.
+
+Golden Copy Finaliser: Consolidates processed fragments into a single, cleaned "Reading Edition." This process includes stripping technical page markers (e.g., [l.30]: #), enforcing Unix-standard line endings (\n), applying Unicode NFC normalisation for cross-platform consistency, and running a final de-hyphenation pass.
+
+EPUB 3.0 Builder: Generates valid e-books directly from the production output. It automatically builds a nested Table of Contents from Markdown headers (#, ##, ###) using epub.Section entries, and embeds specialised CSS referencing the "Gadelica" serif font for authentic Gaelic Type rendering on modern e-readers.
+
+Production Logging: Each batch run generates a production_log.json file with per-file metadata (anomaly counts, audit status, verification state) for human sign-off and quality assurance.
+
+6. Linguistic Modernisation (Phase G)
+The engine includes a "Modernisation Layer" to assist contemporary readers, translating from the 1958 "New Orthography" to the 2012 Standard:
+
+2012 Caighdeán Oifigiúil Toggle: A UI feature that enables/disables the modernisation pass. When inactive, the text remains in its diplomatic 1943/1958 state — this is verified by the test_modernization_toggle_integrity test.
+
+Lexical Mapping: Deterministic spelling shifts defined in config/caighdean_2012.json, including verbal noun simplification (-ughadh ➔ -ú, e.g., beirbhiughadh ➔ beiriú), noun ending normalisation (-idhe ➔ -í, e.g., staraidhe ➔ staraí), and archaic cluster replacement (tráigh ➔ trá, urdhubhadh ➔ urú).
+
+Grammatical Translation: Applies modern rules such as Nominative-for-Genitive substitutions (e.g., ag glanadh fuinneoige ➔ ag glanadh fuinneog) using specialised LLM prompts via the UniversalLLMManager.modernize_sentence() method.
+
+Verb Standardisation: Updates 1st person plural endings from the archaic synthetic form -imíd to the standard analytic -imid, and converts synthetic past tense forms to analytic equivalents (e.g., mholamar ➔ mhol muid).
+
+Anomaly Tracking: Modernised words are logged in the resolution report with type: "modernized" and displayed in the UI as green success banners showing the before/after transformation.
+
+7. Interactive Streamlit Interface
+The suite ships with a full-featured web interface (streamlit_app.py) offering two operational modes:
+
+Single Page Lab: A testing environment for individual OCR snippets with real-time output preview, strict highlighting of linguistic violations rendered as HTML <mark> tags, and an Anomaly Dashboard categorising issues by type (auto_fixed, harmony_violation, modernized, ambiguous).
+
+Batch Production Tab: A directory-level processing interface with configurable Vision Audit policies, integrated Golden Copy generation, and one-click EPUB archival export with download buttons.
+
+LLM Provider Settings Sidebar: A live provider/model selector supporting Gemini, OpenAI, Claude, and OpenRouter, with graceful error messaging when the corresponding environment variable is not set.
+
+8. Cross-Platform Compatibility
+The engine is fully compatible with Windows, macOS, and Linux:
+
+Dynamic Path Construction: All file paths are constructed using os.path.join(os.getcwd(), ...) to automatically conform to the host operating system's path separators.
+
+Universal Line Endings: All output files enforce Unix-standard newlines (newline='\n') regardless of the host OS, ensuring consistency for downstream processing.
+
+Strict Encoding: All file operations explicitly enforce UTF-8 encoding to prevent platform-specific defaults (like Windows CP-1252) from corrupting the Irish diacritics and lenition characters.
+
+9. Testing & Quality Assurance
+The project maintains a comprehensive regression test suite (15 passing tests):
+
+Core Tests (test_ocr_fixer.py): Covers version enforcement, shorthand normalisation, visual heuristics, vowel harmony, cross-platform path handling, image matching (including case-insensitive .JPG/.PNG), golden copy generation, newline consistency, highlight rendering order, and modernisation toggle integrity.
+
+Moderniser Tests (test_modernizer.py): Validates lexical mapping, suffix replacement, and modernisation pipeline integration.
+
+API Diagnostics (test_api.py): A standalone utility that verifies environment variable presence and performs lightweight handshake calls against each configured LLM provider.
