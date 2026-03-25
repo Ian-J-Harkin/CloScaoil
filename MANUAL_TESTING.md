@@ -52,3 +52,38 @@ The 2017 Official Standard rules for "Nominative-for-Genitive" have been injecte
 ### Steps to Execute:
 1. Using an active API Key, run `ocr_fixer.py` specifically targeting a mechanically dense chapter (e.g. Chapter 08 or 12).
 2. **Validation:** Review the LLM's corrections. If the LLM incorrectly "modernizes" a perfectly valid dialectical phrase (e.g., forcibly altering a *Cúige Mumhan* proverb to the Caighdeán), the prompt sequence inside `UniversalLLMManager.modernize_sentence` must be manually tuned.
+
+---
+
+## 🔬 4. Multi-Phase Regression Diffs (Value Verification)
+
+As we transition from the core pipeline (Phase F), through our manual 2017 ruleset (Phase G), and into the open-source dictionary ingester (Phase H), it is critical to definitively prove the delta of value added by each new layer of complexity.
+
+**Objective:** Maintain diffable copies of processed chapters (specifically Chapters 00–05) across all three pipeline modes to verify exactly which words each phase is catching or missing.
+**Dependencies:** A standard diff tool (e.g., VS Code diff, `git diff`, or `vimdiff`).
+
+### Steps to Execute:
+To prove the architecture's efficiency, run the same untreated manuscript file through the pipeline under three different flags/modes, generating three separate output files:
+
+1. **Phase F Output (Clean Transcription, No Modernization):**
+   Run the engine with `--no-modernize` (or skip the modernizer).
+   ```bash
+   python ocr_fixer.py C:\Github\Manannan\caibidlí\old-orthography\manannan00.md --output C:\Github\CloScaoil\diffs\manannan00_PhaseF.md
+   ```
+   *Expected Result:* Basic OCR cleanup only; old mid-century spellings left intact.
+
+2. **Phase G Output (Curated JSON List + LLM Prompt):**
+   Run the engine with the standard 2012 toggle enabled (which currently hits our 30+ word `caighdean_2012.json` map).
+   ```bash
+   python ocr_fixer.py C:\Github\Manannan\caibidlí\old-orthography\manannan00.md --output C:\Github\CloScaoil\diffs\manannan00_PhaseG.md
+   ```
+   *Expected Result:* Extremely common historical suffixes (e.g., *ughadh* to *ú*, *tráigh* to *trá*) and the specific Genitive/Nominative shifts are updated.
+
+3. **Phase H Output (Full BuNaMo Interrogation):**
+   *(Once Phase H is built)* Run the engine using the massive open-source dictionary validator script.
+   ```bash
+   python dictionary_validator.py C:\Github\Manannan\caibidlí\old-orthography\manannan00.md --output C:\Github\CloScaoil\diffs\manannan00_PhaseH.md
+   ```
+
+### The Verification:
+By running a diff across `PhaseG.md` and `PhaseH.md` (`git diff --no-index manannan00_PhaseG.md manannan00_PhaseH.md`), you will see *exactly* the irregular words that the 40,000-word dictionary caught that our simple custom JSON map missed. If there are very few differences, it may prove that Phase G was sufficient for this specific book, saving computational overhead!
